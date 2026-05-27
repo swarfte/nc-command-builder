@@ -155,7 +155,7 @@ def build_command(
 class NcCommandBuilder(ttk.Window):
     def __init__(self):
         super().__init__(themename="cosmo")
-        self.title("nc Command Builder — CTF Edition")
+        self.title("Netcat Command Builder")
         self.geometry("960x720")
         self.minsize(800, 600)
 
@@ -317,6 +317,9 @@ class NcCommandBuilder(ttk.Window):
             pady=2, fill="x"
         )
         ttk.Button(inner, text="Load Profile", command=self._load_profile, width=22).pack(
+            pady=2, fill="x"
+        )
+        ttk.Button(inner, text="Delete Profile", command=self._delete_profile, width=22).pack(
             pady=2, fill="x"
         )
 
@@ -568,6 +571,27 @@ class NcCommandBuilder(ttk.Window):
         self.payload_text.insert("1.0", data.get("payload", ""))
         self._update_preview()
         self._flash_button_feedback(f"Profile '{name}' loaded!")
+
+    def _delete_profile(self):
+        if not PROFILES_DIR.exists():
+            messagebox.showinfo("Delete Profile", "No profiles found.")
+            return
+        files = list(PROFILES_DIR.glob("*.json"))
+        if not files:
+            messagebox.showinfo("Delete Profile", "No profiles found.")
+            return
+        names = [f.stem for f in files]
+        name = self._dropdown_dialog("Delete Profile", "Select profile to delete:", names)
+        if not name:
+            return
+        confirm = messagebox.askyesno(
+            "Delete Profile", f"Delete profile '{name}'?", parent=self,
+        )
+        if not confirm:
+            return
+        path = PROFILES_DIR / f"{name}.json"
+        path.unlink()
+        self._flash_button_feedback(f"Profile '{name}' deleted!")
 
 
 def main():
