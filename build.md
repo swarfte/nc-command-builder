@@ -5,7 +5,7 @@
 ## Windows
 
 ```bash
-uv run pyinstaller --icon=netcat-logo.ico --onefile --windowed --name "nc-command-builder" main.py
+uv run pyinstaller --icon=icons/netcat-logo.ico --onefile --windowed --name "nc-command-builder" main.py
 ```
 
 Output: `dist/nc-command-builder.exe`
@@ -13,26 +13,27 @@ Output: `dist/nc-command-builder.exe`
 ## macOS
 
 ```bash
-uv run pyinstaller --icon=netcat-logo.ico --onefile --windowed --name "nc-command-builder" main.py
+uv run pyinstaller --icon=icons/netcat-logo.png --onefile --windowed --name "nc-command-builder" main.py
 ```
 
-Output: `dist/nc-command-builder` (executable) or `dist/nc-command-builder.app` (app bundle with `--windowed`)
+Output: `dist/nc-command-builder.app`
 
-> Note: For best results on macOS, convert the `.ico` to `.icns` first:
+> Note: For best results on macOS, convert the `.png` to `.icns` first:
+>
 > ```bash
-> # Requires macOS and an .png source
-> mkdir netcat-logo.iconset
-> sips -z 16 16     netcat-logo.png --out netcat-logo.iconset/icon_16x16.png
-> sips -z 32 32     netcat-logo.png --out netcat-logo.iconset/icon_16x16@2x.png
-> sips -z 32 32     netcat-logo.png --out netcat-logo.iconset/icon_32x32.png
-> sips -z 64 64     netcat-logo.png --out netcat-logo.iconset/icon_32x32@2x.png
-> sips -z 128 128   netcat-logo.png --out netcat-logo.iconset/icon_128x128.png
-> sips -z 256 256   netcat-logo.png --out netcat-logo.iconset/icon_128x128@2x.png
-> sips -z 256 256   netcat-logo.png --out netcat-logo.iconset/icon_256x256.png
-> sips -z 512 512   netcat-logo.png --out netcat-logo.iconset/icon_256x256@2x.png
-> iconutil -c icns netcat-logo.iconset
+> mkdir icons/netcat-logo.iconset
+> sips -z 16 16     icons/netcat-logo.png --out icons/netcat-logo.iconset/icon_16x16.png
+> sips -z 32 32     icons/netcat-logo.png --out icons/netcat-logo.iconset/icon_16x16@2x.png
+> sips -z 32 32     icons/netcat-logo.png --out icons/netcat-logo.iconset/icon_32x32.png
+> sips -z 64 64     icons/netcat-logo.png --out icons/netcat-logo.iconset/icon_32x32@2x.png
+> sips -z 128 128   icons/netcat-logo.png --out icons/netcat-logo.iconset/icon_128x128.png
+> sips -z 256 256   icons/netcat-logo.png --out icons/netcat-logo.iconset/icon_128x128@2x.png
+> sips -z 256 256   icons/netcat-logo.png --out icons/netcat-logo.iconset/icon_256x256.png
+> sips -z 512 512   icons/netcat-logo.png --out icons/netcat-logo.iconset/icon_256x256@2x.png
+> iconutil -c icns icons/netcat-logo.iconset
 > ```
-> Then use `--icon=netcat-logo.icns`.
+>
+> Then use `--icon=icons/netcat-logo.icns`.
 
 ## Linux
 
