@@ -88,6 +88,7 @@ def build_command(
     no_dns: bool,
     timeout: str,
     close_delay: str,
+    keep_listen: bool,
     local_bind: str,
 ) -> str:
     """Build the final nc command string."""
@@ -131,6 +132,8 @@ def build_command(
         flags.extend(["-q", close_delay])
     if local_bind and is_listen:
         flags.extend(["-s", local_bind])
+    if keep_listen and is_listen:
+        flags.append("-k")
 
     # ── host/port (ensure -p sits directly before port) ──
     target = []
@@ -167,6 +170,7 @@ class NcCommandBuilder(ttk.Window):
         self.var_no_dns = BooleanVar(value=True)
         self.var_timeout = StringVar(value="5")
         self.var_close_delay = StringVar(value="")
+        self.var_keep_listen = BooleanVar(value=True)
         self.var_local_bind = StringVar(value="")
         self.var_template = StringVar(value="Custom")
 
@@ -175,7 +179,7 @@ class NcCommandBuilder(ttk.Window):
             self.var_host, self.var_port, self.var_mode, self.var_protocol,
             self.var_flavor, self.var_payload_mode, self.var_send_method,
             self.var_verbose, self.var_no_dns, self.var_timeout,
-            self.var_close_delay, self.var_local_bind,
+            self.var_close_delay, self.var_keep_listen, self.var_local_bind,
         ):
             var.trace_add("write", lambda *_: self._update_preview())
 
@@ -331,6 +335,9 @@ class NcCommandBuilder(ttk.Window):
         ttk.Checkbutton(opts, text="No DNS (-n)", variable=self.var_no_dns).pack(
             side="left", padx=4
         )
+        ttk.Checkbutton(opts, text="Keep listening (-k)", variable=self.var_keep_listen).pack(
+            side="left", padx=4
+        )
 
         ttk.Label(opts, text="Timeout (-w):").pack(side="left", padx=(12, 0))
         ttk.Entry(opts, textvariable=self.var_timeout, width=5).pack(side="left", padx=2)
@@ -430,6 +437,7 @@ class NcCommandBuilder(ttk.Window):
             no_dns=self.var_no_dns.get(),
             timeout=self.var_timeout.get(),
             close_delay=self.var_close_delay.get(),
+            keep_listen=self.var_keep_listen.get(),
             local_bind=self.var_local_bind.get(),
         )
 
@@ -486,6 +494,7 @@ class NcCommandBuilder(ttk.Window):
             "no_dns": self.var_no_dns.get(),
             "timeout": self.var_timeout.get(),
             "close_delay": self.var_close_delay.get(),
+            "keep_listen": self.var_keep_listen.get(),
             "local_bind": self.var_local_bind.get(),
         }
         path = PROFILES_DIR / f"{name}.json"
@@ -524,6 +533,7 @@ class NcCommandBuilder(ttk.Window):
         self.var_no_dns.set(data.get("no_dns", True))
         self.var_timeout.set(data.get("timeout", ""))
         self.var_close_delay.set(data.get("close_delay", ""))
+        self.var_keep_listen.set(data.get("keep_listen", True))
         self.var_local_bind.set(data.get("local_bind", ""))
         self.payload_text.delete("1.0", "end")
         self.payload_text.insert("1.0", data.get("payload", ""))
