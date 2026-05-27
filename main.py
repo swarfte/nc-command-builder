@@ -19,17 +19,17 @@ PROFILES_DIR = APP_DIR / "profiles"
 TEMPLATES = {
     "Custom": "",
     "Raw TCP line": "hello",
-    "HTTP GET": "GET /?flag=pwn HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n",
+    "HTTP GET": r"GET /?flag=pwn HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n",
     "HTTP POST": (
-        "POST / HTTP/1.1\r\n"
-        "Host: {host}\r\n"
-        "Content-Type: application/x-www-form-urlencoded\r\n"
-        "Content-Length: {length}\r\n"
-        "Connection: close\r\n\r\n"
-        "data=hello"
+        r"POST / HTTP/1.1\r\n"
+        r"Host: {host}\r\n"
+        r"Content-Type: application/x-www-form-urlencoded\r\n"
+        r"Content-Length: {length}\r\n"
+        r"Connection: close\r\n\r\n"
+        r"data=hello"
     ),
-    "Redis PING": "PING\r\n",
-    "SMTP HELO": "HELO localhost\r\n",
+    "Redis PING": r"PING\r\n",
+    "SMTP HELO": r"HELO localhost\r\n",
 }
 
 NC_FLAVORS = {
@@ -47,7 +47,7 @@ def payload_to_printf(raw: str, mode: str) -> str:
         escaped = raw.replace("\\", "\\\\").replace('"', '\\"')
         return escaped
     elif mode == "Escapes (\\r\\n, \\x41)":
-        return raw
+        return raw.replace("\n", "\\r\\n")
     elif mode == "Hex (41 42 43)":
         hex_clean = raw.strip().replace(",", " ").split()
         parts = []
@@ -414,8 +414,10 @@ class NcCommandBuilder(ttk.Window):
             template = template.replace("{host}", host).replace("{length}", str(length))
             if "HTTP" in name or "SMTP" in name or "Redis" in name:
                 self.var_payload_mode.set("Escapes (\\r\\n, \\x41)")
+            # Convert \r\n text to actual newlines for human-readable display
+            display_text = template.replace("\\r\\n", "\n")
             self.payload_text.delete("1.0", "end")
-            self.payload_text.insert("1.0", template)
+            self.payload_text.insert("1.0", display_text)
             self._update_preview()
 
     def _update_preview(self):
