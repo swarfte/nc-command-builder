@@ -1,0 +1,16 @@
+{
+  "host": "127.0.0.1",
+  "port": "1337",
+  "mode": "Connect",
+  "protocol": "TCP",
+  "flavor": "GNU netcat",
+  "payload": "GET /challenge HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n",
+  "payload_mode": "Escapes (\\r\\n, \\x41)",
+  "send_method": "printf",
+  "verbose": true,
+  "no_dns": true,
+  "timeout": "5",
+  "close_delay": "",
+  "keep_listen": true,
+  "local_bind": ""
+}

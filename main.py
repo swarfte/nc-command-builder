@@ -6,6 +6,7 @@ from pathlib import Path
 
 import ttkbootstrap as ttk
 from tkinter import StringVar, BooleanVar, Text, messagebox, filedialog
+from tkinter import simpledialog
 from tkinter.scrolledtext import ScrolledText
 
 
@@ -477,7 +478,7 @@ class NcCommandBuilder(ttk.Window):
     # ── Profiles ─────────────────────────────────────────────────────────
 
     def _save_profile(self):
-        name = messagebox.askstring("Save Profile", "Profile name:")
+        name = simpledialog.askstring("Save Profile", "Profile name:", parent=self)
         if not name:
             return
         PROFILES_DIR.mkdir(exist_ok=True)
@@ -511,8 +512,9 @@ class NcCommandBuilder(ttk.Window):
             messagebox.showinfo("Load Profile", "No profiles found.")
             return
         names = [f.stem for f in files]
-        name = messagebox.askstring(
-            "Load Profile", f"Available profiles:\n{', '.join(names)}\n\nEnter name:"
+        name = simpledialog.askstring(
+            "Load Profile", f"Available profiles:\n{', '.join(names)}\n\nEnter name:",
+            parent=self,
         )
         if not name:
             return
