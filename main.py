@@ -14,6 +14,7 @@ from tkinter.scrolledtext import ScrolledText
 # ── Constants ────────────────────────────────────────────────────────────────
 
 APP_DIR = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
+RESOURCE_DIR = Path(sys._MEIPASS) if getattr(sys, "frozen", False) else APP_DIR
 PROFILES_DIR = APP_DIR / "profiles"
 
 TEMPLATES = {
@@ -162,7 +163,7 @@ class NcCommandBuilder(ttk.Window):
         self.minsize(800, 600)
 
         # ── Window icon ──
-        icon_dir = APP_DIR / "icons"
+        icon_dir = RESOURCE_DIR / "icons"
         if sys.platform == "win32":
             ico = icon_dir / "netcat-logo.ico"
             if ico.exists():
