@@ -152,11 +152,11 @@ class NcCommandBuilder(ttk.Window):
         self.minsize(800, 600)
 
         # ── Variables ──
-        self.var_host = StringVar(value="localhost")
+        self.var_host = StringVar(value="127.0.0.1")
         self.var_port = StringVar(value="1337")
         self.var_mode = StringVar(value="Connect")
         self.var_protocol = StringVar(value="TCP")
-        self.var_flavor = StringVar(value="OpenBSD nc")
+        self.var_flavor = StringVar(value="GNU netcat")
         self.var_payload_mode = StringVar(value="Escapes (\\r\\n, \\x41)")
         self.var_send_method = StringVar(value="printf")
         self.var_verbose = BooleanVar(value=True)
