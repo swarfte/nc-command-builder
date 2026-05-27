@@ -43,12 +43,57 @@ NC_FLAVORS = {
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 def payload_to_printf(raw: str, mode: str) -> str:
-    """Convert payload to a printf-safe string based on mode."""
+    """Convert payload to a printf-safe string based on mode.
+
+    All modes produce output safe for use inside shell double quotes:
+      printf "<output>" | nc ...
+    """
     if mode == "Plain text":
         escaped = raw.replace("\\", "\\\\").replace('"', '\\"')
         return escaped
     elif mode == "Escapes (\\r\\n, \\x41)":
-        return raw.replace("\n", "\\r\\n")
+        # Comprehensive escaping for printf inside shell double quotes.
+        # Handles: CRLF conversion, shell metacharacters, printf format
+        # specifiers, and control characters.
+        result = []
+        i = 0
+        while i < len(raw):
+            ch = raw[i]
+            if ch == "\r" and i + 1 < len(raw) and raw[i + 1] == "\n":
+                result.append("\\r\\n")
+                i += 2
+            elif ch == "\n":
+                result.append("\\r\\n")
+                i += 1
+            elif ch == "\r":
+                result.append("\\r")
+                i += 1
+            elif ch == "\\":
+                result.append("\\\\")
+                i += 1
+            elif ch == '"':
+                result.append('\\"')
+                i += 1
+            elif ch == "$":
+                result.append("\\$")
+                i += 1
+            elif ch == "`":
+                result.append("\\`")
+                i += 1
+            elif ch == "%":
+                result.append("%%")
+                i += 1
+            elif ord(ch) < 32:
+                # Other control characters → \x hex notation
+                result.append(f"\\x{ord(ch):02x}")
+                i += 1
+            elif ord(ch) == 127:
+                result.append("\\x7f")
+                i += 1
+            else:
+                result.append(ch)
+                i += 1
+        return "".join(result)
     elif mode == "Hex (41 42 43)":
         hex_clean = raw.strip().replace(",", " ").split()
         parts = []
