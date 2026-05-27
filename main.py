@@ -17,7 +17,7 @@ PROFILES_DIR = Path(__file__).parent / "profiles"
 TEMPLATES = {
     "Custom": "",
     "Raw TCP line": "hello",
-    "HTTP GET": "GET / HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n",
+    "HTTP GET": "GET /?flag=pwn HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n",
     "HTTP POST": (
         "POST / HTTP/1.1\r\n"
         "Host: {host}\r\n"
