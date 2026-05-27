@@ -1,6 +1,7 @@
 import json
 import os
 import shlex
+import sys
 import textwrap
 from pathlib import Path
 
@@ -12,7 +13,8 @@ from tkinter.scrolledtext import ScrolledText
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
-PROFILES_DIR = Path(__file__).parent / "profiles"
+APP_DIR = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
+PROFILES_DIR = APP_DIR / "profiles"
 
 TEMPLATES = {
     "Custom": "",
