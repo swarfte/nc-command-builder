@@ -477,6 +477,39 @@ class NcCommandBuilder(ttk.Window):
 
     # ── Profiles ─────────────────────────────────────────────────────────
 
+    def _dropdown_dialog(self, title, prompt, options):
+        """Show a modal dialog with a dropdown. Returns selected value or None."""
+        result = [None]
+        dialog = ttk.Toplevel(self)
+        dialog.title(title)
+        dialog.resizable(False, False)
+        dialog.transient(self)
+        dialog.grab_set()
+
+        ttk.Label(dialog, text=prompt).pack(padx=12, pady=(12, 4))
+        var = StringVar(value=options[0])
+        combo = ttk.Combobox(dialog, textvariable=var, values=options,
+                             state="readonly", width=30)
+        combo.pack(padx=12, pady=4)
+
+        def on_ok():
+            result[0] = var.get()
+            dialog.destroy()
+
+        def on_cancel():
+            dialog.destroy()
+
+        btn_frame = ttk.Frame(dialog)
+        btn_frame.pack(padx=12, pady=(4, 12))
+        ttk.Button(btn_frame, text="OK", command=on_ok, width=8).pack(side="left", padx=4)
+        ttk.Button(btn_frame, text="Cancel", command=on_cancel, width=8).pack(side="left", padx=4)
+
+        dialog.protocol("WM_DELETE_WINDOW", on_cancel)
+        # Center on parent
+        dialog.geometry(f"+{self.winfo_rootx() + 100}+{self.winfo_rooty() + 100}")
+        self.wait_window(dialog)
+        return result[0]
+
     def _save_profile(self):
         name = simpledialog.askstring("Save Profile", "Profile name:", parent=self)
         if not name:
@@ -512,16 +545,10 @@ class NcCommandBuilder(ttk.Window):
             messagebox.showinfo("Load Profile", "No profiles found.")
             return
         names = [f.stem for f in files]
-        name = simpledialog.askstring(
-            "Load Profile", f"Available profiles:\n{', '.join(names)}\n\nEnter name:",
-            parent=self,
-        )
+        name = self._dropdown_dialog("Load Profile", "Select profile:", names)
         if not name:
             return
         path = PROFILES_DIR / f"{name}.json"
-        if not path.exists():
-            messagebox.showerror("Load Profile", f"Profile '{name}' not found.")
-            return
         with open(path) as f:
             data = json.load(f)
         self.var_host.set(data.get("host", ""))
