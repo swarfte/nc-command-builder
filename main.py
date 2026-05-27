@@ -89,6 +89,7 @@ def payload_to_printf(raw: str, mode: str, send_method: str = "printf") -> str:
         pct = "%%" if send_method == "printf" else "%"
         lines = raw.replace('\r\n', '\n').replace('\r', '\n').split('\n')
         result_lines = []
+        is_http = False
 
         for i, line in enumerate(lines):
             if i == 0:
@@ -96,6 +97,7 @@ def payload_to_printf(raw: str, mode: str, send_method: str = "printf") -> str:
                 # Greedy .* captures the full URI (which may contain spaces).
                 m = re.match(r'^(\w+)\s+(.*)\s+(HTTP/\S+)$', line)
                 if m:
+                    is_http = True
                     method, uri, version = m.groups()
                     result_lines.append(
                         f'{method} {_url_encode_uri(uri, pct)} {version}'
@@ -107,7 +109,15 @@ def payload_to_printf(raw: str, mode: str, send_method: str = "printf") -> str:
                 # Headers / body — keep literal, only escape ' and \
                 result_lines.append(_escape_for_single_quotes(line, pct))
 
-        return '\\r\\n'.join(result_lines)
+        result = '\\r\\n'.join(result_lines)
+        # HTTP requires headers to end with a blank line (\r\n\r\n).
+        # Auto-append if the user didn't include one.
+        if is_http:
+            if not result.endswith('\\r\\n'):
+                result += '\\r\\n'
+            if not result.endswith('\\r\\n\\r\\n'):
+                result += '\\r\\n'
+        return result
     elif mode == "Hex (41 42 43)":
         hex_clean = raw.strip().replace(",", " ").split()
         parts = []
