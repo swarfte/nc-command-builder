@@ -49,12 +49,19 @@ def payload_to_printf(raw: str, mode: str) -> str:
       printf "<output>" | nc ...
     """
     if mode == "Plain text":
-        escaped = raw.replace("\\", "\\\\").replace('"', '\\"')
-        return escaped
+        # Minimal escaping — payload and preview should look the same.
+        # Only escape characters that would break the shell double-quote string.
+        return raw.replace("\\", "\\\\").replace('"', '\\"').replace("$", "\\$").replace("`", "\\`")
+
     elif mode == "Escapes (\\r\\n, \\x41)":
-        # Comprehensive escaping for printf inside shell double quotes.
-        # Handles: CRLF conversion, shell metacharacters, printf format
-        # specifiers, and control characters.
+        # URL-encode style: shell/printf metacharacters and spaces are
+        # converted to \\xNN hex notation (like browser %XX encoding but
+        # using printf format).  This keeps the command copy-paste safe
+        # while the payload editor stays human-readable.
+        #
+        # Encoded to \\xNN: space, ", $, %, \\, `, and all control chars.
+        # Kept literal: alphanumeric and safe punctuation (/:?=&@.-_~! etc.)
+        _ENCODE_SET = frozenset((' ', '"', '$', '%', '\\', '`'))
         result = []
         i = 0
         while i < len(raw):
@@ -68,27 +75,9 @@ def payload_to_printf(raw: str, mode: str) -> str:
             elif ch == "\r":
                 result.append("\\r")
                 i += 1
-            elif ch == "\\":
-                result.append("\\\\")
-                i += 1
-            elif ch == '"':
-                result.append('\\"')
-                i += 1
-            elif ch == "$":
-                result.append("\\$")
-                i += 1
-            elif ch == "`":
-                result.append("\\`")
-                i += 1
-            elif ch == "%":
-                result.append("%%")
-                i += 1
-            elif ord(ch) < 32:
-                # Other control characters → \x hex notation
+            elif ord(ch) < 32 or ord(ch) == 127 or ch in _ENCODE_SET:
+                # Control chars, DEL, and metacharacters → \\xNN
                 result.append(f"\\x{ord(ch):02x}")
-                i += 1
-            elif ord(ch) == 127:
-                result.append("\\x7f")
                 i += 1
             else:
                 result.append(ch)
