@@ -154,7 +154,7 @@ def build_command(
 
 class NcCommandBuilder(ttk.Window):
     def __init__(self):
-        super().__init__(themename="cosmo")
+        super().__init__(themename="litera")
         self.title("Netcat Command Builder")
         self.geometry("960x720")
         self.minsize(800, 600)
@@ -313,13 +313,13 @@ class NcCommandBuilder(ttk.Window):
         ttk.Separator(inner, orient="horizontal").pack(fill="x", pady=8)
 
         # Profiles
-        ttk.Button(inner, text="Save Profile", command=self._save_profile, width=22).pack(
+        ttk.Button(inner, text="Save Profile", command=self._save_profile, width=22, bootstyle="success").pack(
             pady=2, fill="x"
         )
-        ttk.Button(inner, text="Load Profile", command=self._load_profile, width=22).pack(
+        ttk.Button(inner, text="Load Profile", command=self._load_profile, width=22, bootstyle="info").pack(
             pady=2, fill="x"
         )
-        ttk.Button(inner, text="Delete Profile", command=self._delete_profile, width=22).pack(
+        ttk.Button(inner, text="Delete Profile", command=self._delete_profile, width=22, bootstyle="danger").pack(
             pady=2, fill="x"
         )
 
