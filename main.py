@@ -161,6 +161,17 @@ class NcCommandBuilder(ttk.Window):
         self.geometry("960x720")
         self.minsize(800, 600)
 
+        # ── Window icon ──
+        icon_dir = APP_DIR / "icons"
+        if sys.platform == "win32":
+            ico = icon_dir / "netcat-logo.ico"
+            if ico.exists():
+                self.iconbitmap(str(ico))
+        png = icon_dir / "netcat-logo.png"
+        if png.exists():
+            self._icon_img = ttk.PhotoImage(file=str(png))
+            self.iconphoto(True, self._icon_img)
+
         # ── Variables ──
         self.var_host = StringVar(value="127.0.0.1")
         self.var_port = StringVar(value="1337")
