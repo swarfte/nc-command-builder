@@ -146,13 +146,13 @@ def build_command(
 
 class NcCommandBuilder(ttk.Window):
     def __init__(self):
-        super().__init__(themename="darkly")
+        super().__init__(themename="cosmo")
         self.title("nc Command Builder — CTF Edition")
         self.geometry("960x720")
         self.minsize(800, 600)
 
         # ── Variables ──
-        self.var_host = StringVar(value="example.com")
+        self.var_host = StringVar(value="localhost")
         self.var_port = StringVar(value="1337")
         self.var_mode = StringVar(value="Connect")
         self.var_protocol = StringVar(value="TCP")
@@ -351,7 +351,7 @@ class NcCommandBuilder(ttk.Window):
         ttk.Button(btn_frame, text="Copy Command", command=self._copy_command, width=16).pack(
             side="left", padx=4
         )
-        ttk.Button(btn_frame, text="Copy Payload Only", command=self._copy_payload, width=16).pack(
+        ttk.Button(btn_frame, text="Copy Payload Only", command=self._copy_payload, width=18).pack(
             side="left", padx=4
         )
         ttk.Button(btn_frame, text="Run in Terminal", command=self._run_command, width=16).pack(
