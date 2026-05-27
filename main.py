@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import shlex
 import sys
 import textwrap
@@ -42,11 +43,39 @@ NC_FLAVORS = {
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
-def payload_to_printf(raw: str, mode: str) -> str:
-    """Convert payload to a printf-safe string based on mode.
+# Characters safe to keep literal in URL-encoded output (RFC 3986 unreserved
+# plus HTTP/URL structural characters that must stay readable).
+_URL_SAFE = frozenset(
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    'abcdefghijklmnopqrstuvwxyz'
+    '0123456789'
+    '-._~/:?=&@!*,()'
+)
 
-    All modes produce output safe for use inside shell double quotes:
-      printf "<output>" | nc ...
+
+def _url_encode_uri(uri: str, pct: str) -> str:
+    """URL-encode a URI using %%XX (printf) or %XX (echo -e) format."""
+    return ''.join(
+        f'{pct}{ord(ch):02X}' if ch not in _URL_SAFE else ch
+        for ch in uri
+    )
+
+
+def _escape_for_single_quotes(line: str, pct: str) -> str:
+    """Escape a line for use inside shell single quotes.
+
+    Single-quoted strings can't contain literal '.  We encode it as
+    {pct}27 (the URL-encoded form).  Backslashes are doubled so that
+    printf/echo-e interpret \\ as a literal backslash.
+    """
+    return line.replace('\\', '\\\\').replace("'", f'{pct}27')
+
+
+def payload_to_printf(raw: str, mode: str, send_method: str = "printf") -> str:
+    """Convert payload to a printf/echo-safe string based on mode.
+
+    Plain text  → minimal escaping, output inside double quotes.
+    Escapes     → URL-encode style, output inside single quotes.
     """
     if mode == "Plain text":
         # Minimal escaping — payload and preview should look the same.
@@ -54,35 +83,31 @@ def payload_to_printf(raw: str, mode: str) -> str:
         return raw.replace("\\", "\\\\").replace('"', '\\"').replace("$", "\\$").replace("`", "\\`")
 
     elif mode == "Escapes (\\r\\n, \\x41)":
-        # URL-encode style: shell/printf metacharacters and spaces are
-        # converted to \\xNN hex notation (like browser %XX encoding but
-        # using printf format).  This keeps the command copy-paste safe
-        # while the payload editor stays human-readable.
-        #
-        # Encoded to \\xNN: space, ", $, %, \\, `, and all control chars.
-        # Kept literal: alphanumeric and safe punctuation (/:?=&@.-_~! etc.)
-        _ENCODE_SET = frozenset((' ', '"', '$', '%', '\\', '`'))
-        result = []
-        i = 0
-        while i < len(raw):
-            ch = raw[i]
-            if ch == "\r" and i + 1 < len(raw) and raw[i + 1] == "\n":
-                result.append("\\r\\n")
-                i += 2
-            elif ch == "\n":
-                result.append("\\r\\n")
-                i += 1
-            elif ch == "\r":
-                result.append("\\r")
-                i += 1
-            elif ord(ch) < 32 or ord(ch) == 127 or ch in _ENCODE_SET:
-                # Control chars, DEL, and metacharacters → \\xNN
-                result.append(f"\\x{ord(ch):02x}")
-                i += 1
+        # URL-encode the URI portion of HTTP request lines; keep
+        # headers/body literal.  Output targets single-quoted
+        # printf '...' (or echo -e '...').
+        pct = "%%" if send_method == "printf" else "%"
+        lines = raw.replace('\r\n', '\n').replace('\r', '\n').split('\n')
+        result_lines = []
+
+        for i, line in enumerate(lines):
+            if i == 0:
+                # Detect HTTP request line: METHOD URI HTTP/x.x
+                # Greedy .* captures the full URI (which may contain spaces).
+                m = re.match(r'^(\w+)\s+(.*)\s+(HTTP/\S+)$', line)
+                if m:
+                    method, uri, version = m.groups()
+                    result_lines.append(
+                        f'{method} {_url_encode_uri(uri, pct)} {version}'
+                    )
+                else:
+                    # Non-HTTP first line — escape for single-quote safety
+                    result_lines.append(_escape_for_single_quotes(line, pct))
             else:
-                result.append(ch)
-                i += 1
-        return "".join(result)
+                # Headers / body — keep literal, only escape ' and \
+                result_lines.append(_escape_for_single_quotes(line, pct))
+
+        return '\\r\\n'.join(result_lines)
     elif mode == "Hex (41 42 43)":
         hex_clean = raw.strip().replace(",", " ").split()
         parts = []
@@ -138,11 +163,13 @@ def build_command(
     # ── payload pipeline prefix ──
     payload_prefix = ""
     if payload.strip() and not is_listen:
-        printf_str = payload_to_printf(payload, payload_mode)
+        printf_str = payload_to_printf(payload, payload_mode, send_method)
+        is_escapes = payload_mode == "Escapes (\\r\\n, \\x41)"
+        quote = "'" if is_escapes else '"'
         if send_method == "printf":
-            payload_prefix = f'printf "{printf_str}" | '
+            payload_prefix = f"printf {quote}{printf_str}{quote} | "
         else:
-            payload_prefix = f'echo -e "{printf_str}" | '
+            payload_prefix = f"echo -e {quote}{printf_str}{quote} | "
 
     # ── nc binary ──
     nc_bin = "ncat" if flavor_key == "ncat" else "nc"
