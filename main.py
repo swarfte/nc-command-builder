@@ -110,12 +110,13 @@ def build_command(
 
     # ── flags ──
     flags = []
+    needs_p = False
     if is_listen:
         flags.append("-l")
         if flavor_key == "gnu":
             pass  # GNU nc: -l implies -p not needed on some versions
         else:
-            flags.append("-p")
+            needs_p = True
     if verbose:
         flags.append("-v")
     if no_dns and not is_listen:
@@ -131,10 +132,13 @@ def build_command(
     if local_bind and is_listen:
         flags.extend(["-s", local_bind])
 
-    # ── host/port ──
+    # ── host/port (ensure -p sits directly before port) ──
     target = []
     if is_listen:
-        target.append(port)
+        if needs_p:
+            target.extend(["-p", port])
+        else:
+            target.append(port)
     else:
         target.extend([host, port])
 
