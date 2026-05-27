@@ -13,7 +13,14 @@ Output: `dist/nc-command-builder.exe`
 ## macOS
 
 ```bash
-uv run pyinstaller --icon=icons/netcat-logo.png --add-data "icons:icons" --onefile --windowed --name "nc-command-builder" main.py
+uv run pyinstaller \
+  --windowed \
+  --onedir \
+  --name "nc-command-builder" \
+  --icon icons/netcat-logo.png \
+  --add-data "icons:icons" \
+  --osx-bundle-identifier "com.swarfte.nc-command-builder" \
+  main.py
 ```
 
 Output: `dist/nc-command-builder.app`
