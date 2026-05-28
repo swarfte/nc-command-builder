@@ -298,6 +298,7 @@ class NcCommandBuilder(ttk.Window):
         self.var_keep_listen = BooleanVar(value=True)
         self.var_local_bind = StringVar(value="")
         self.var_template = StringVar(value="Custom")
+        self.var_auto_content_length = BooleanVar(value=False)
 
         # ── Trace updates ──
         for var in (
@@ -305,6 +306,7 @@ class NcCommandBuilder(ttk.Window):
             self.var_flavor, self.var_payload_mode, self.var_send_method,
             self.var_verbose, self.var_no_dns, self.var_timeout,
             self.var_close_delay, self.var_keep_listen, self.var_local_bind,
+            self.var_auto_content_length,
         ):
             var.trace_add("write", lambda *_: self._update_preview())
 
@@ -466,6 +468,9 @@ class NcCommandBuilder(ttk.Window):
         ttk.Checkbutton(opts, text="Keep listening (-k)", variable=self.var_keep_listen).pack(
             side="left", padx=4
         )
+        ttk.Checkbutton(opts, text="Auto Content-Length", variable=self.var_auto_content_length).pack(
+            side="left", padx=4
+        )
 
         ttk.Label(opts, text="Timeout (-w):").pack(side="left", padx=(12, 0))
         ttk.Entry(opts, textvariable=self.var_timeout, width=5).pack(side="left", padx=2)
@@ -546,6 +551,10 @@ class NcCommandBuilder(ttk.Window):
     def _update_preview(self):
         payload = self.payload_text.get("1.0", "end-1c")
 
+        # Auto Content-Length: compute body byte length and override header
+        if self.var_auto_content_length.get():
+            payload = self._apply_auto_content_length(payload)
+
         # Update byte/char/line count
         char_count = len(payload)
         line_count = payload.count("\n") + 1 if payload else 0
@@ -576,6 +585,28 @@ class NcCommandBuilder(ttk.Window):
         self.cmd_text.delete("1.0", "end")
         self.cmd_text.insert("1.0", cmd)
         self.cmd_text.config(state="disabled")
+
+    def _apply_auto_content_length(self, payload: str) -> str:
+        """Replace Content-Length header value with calculated body byte length."""
+        # Find blank line separating headers from body
+        sep = "\r\n\r\n" if "\r\n\r\n" in payload else "\n\n"
+        parts = payload.split(sep, 1)
+        if len(parts) < 2:
+            return payload  # No body found
+        headers, body = parts
+        # Calculate actual byte length of body
+        if self.var_payload_mode.get() == "Escapes (\\r\\n, \\x41)":
+            body_bytes = len(_interpret_escapes(body).encode("utf-8", errors="surrogateescape"))
+        else:
+            body_bytes = len(body.encode("utf-8", errors="surrogateescape"))
+        # Replace Content-Length value in headers
+        new_headers = re.sub(
+            r"(Content-Length:\s*)\d+",
+            rf"\g<1>{body_bytes}",
+            headers,
+            flags=re.IGNORECASE,
+        )
+        return new_headers + sep + body
 
     def _copy_command(self):
         cmd = self.cmd_text.get("1.0", "end-1c")
@@ -660,6 +691,7 @@ class NcCommandBuilder(ttk.Window):
             "close_delay": self.var_close_delay.get(),
             "keep_listen": self.var_keep_listen.get(),
             "local_bind": self.var_local_bind.get(),
+            "auto_content_length": self.var_auto_content_length.get(),
         }
         path = PROFILES_DIR / f"{name}.json"
         with open(path, "w") as f:
@@ -694,6 +726,7 @@ class NcCommandBuilder(ttk.Window):
         self.var_close_delay.set(data.get("close_delay", ""))
         self.var_keep_listen.set(data.get("keep_listen", True))
         self.var_local_bind.set(data.get("local_bind", ""))
+        self.var_auto_content_length.set(data.get("auto_content_length", False))
         self.payload_text.delete("1.0", "end")
         self.payload_text.insert("1.0", data.get("payload", ""))
         self._update_preview()
