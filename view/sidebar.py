@@ -41,22 +41,14 @@ class Sidebar(ttk.LabelFrame):
         # Bind double-click to load profile
         self.profile_list.bind("<Double-1>", lambda e: self._load_selected_profile())
 
-        # Bind right-click for context menu
+        # Bind right-click for context menu on the treeview itself
         self.profile_list.bind("<Button-3>", self._show_context_menu)
-
-        # Management buttons
-        btn_frame = ttk.Frame(inner)
-        btn_frame.pack(fill="x", pady=(4, 0))
-
-        ttk.Button(btn_frame, text="New Profile", command=self._save_profile_dialog, width=20, bootstyle="success").pack(
-            pady=2, fill="x"
-        )
-        ttk.Button(btn_frame, text="New Folder", command=self._new_folder_dialog, width=20).pack(
-            pady=2, fill="x"
-        )
 
         # Initial load
         self._refresh_profiles()
+
+        # Create default profile if no profiles exist
+        self._create_default_profile_if_needed()
 
     def _refresh_profiles(self):
         """Refresh profile list from controller."""
@@ -128,22 +120,26 @@ class Sidebar(ttk.LabelFrame):
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load profile: {e}")
 
-    def _save_profile_dialog(self):
-        """Show dialog to save new profile."""
+    def _save_profile_dialog(self, folder_name=None):
+        """Show dialog to save new profile.
+
+        Args:
+            folder_name: Optional folder name. If None, uses default folder.
+        """
         profile_name = simpledialog.askstring("Save Profile", "Profile name:", parent=self)
         if not profile_name:
             return
 
-        # Ask for folder
-        folder_name = simpledialog.askstring("Save Profile", "Folder name (leave empty for 'Uncategorized'):", parent=self)
-        if not folder_name:
-            folder_name = "Uncategorized"
-
         try:
-            # Set folder in controller
+            # Set the folder before saving
+            if folder_name:
+                self.main_window.controller.set_folder(folder_name)
+            else:
+                # Use default folder when creating from empty space
+                self.main_window.controller.set_folder("General")
+
+            # Save profile (will use current_folder from controller)
             self.main_window.controller.save_profile(profile_name)
-            # Update folder in profile
-            self.main_window.profile_controller.rename_profile_folder(profile_name, folder_name)
 
             self._refresh_profiles()
             self.main_window.flash_feedback(f"Profile '{profile_name}' saved!")
@@ -161,18 +157,25 @@ class Sidebar(ttk.LabelFrame):
 
     def _show_context_menu(self, event):
         """Show context menu for profile management."""
-        selection = self.profile_list.selection()
-        if not selection:
+        # Get the item that was clicked
+        item = self.profile_list.identify_row(event.y)
+        if not item:
+            # Clicked on empty space - show general menu
+            self._show_general_context_menu(event)
             return
 
-        item = selection[0]
+        # Select the item that was clicked
+        self.profile_list.selection_set(item)
+
         item_text = self.profile_list.item(item, "text")
 
         # Create context menu
         context_menu = ttk.Menu(self, tearoff=0)
 
         if self.profile_list.parent(item) == "":
-            # Folder menu
+            # Folder menu - pass folder name when creating profile
+            context_menu.add_command(label="New Profile", command=lambda: self._save_profile_dialog(item_text))
+            context_menu.add_separator()
             context_menu.add_command(label="Rename Folder", command=lambda: self._rename_folder_dialog(item_text))
             context_menu.add_command(label="Delete Folder", command=lambda: self._delete_folder(item_text))
         else:
@@ -184,6 +187,14 @@ class Sidebar(ttk.LabelFrame):
             context_menu.add_separator()
             context_menu.add_command(label="Move to Folder", command=lambda: self._move_profile_dialog(item_text))
 
+        # Show menu at cursor position
+        context_menu.post(event.x_root, event.y_root)
+
+    def _show_general_context_menu(self, event):
+        """Show context menu for general operations (clicked on empty space)."""
+        context_menu = ttk.Menu(self, tearoff=0)
+        context_menu.add_command(label="New Profile", command=self._save_profile_dialog)
+        context_menu.add_command(label="New Folder", command=self._new_folder_dialog)
         # Show menu at cursor position
         context_menu.post(event.x_root, event.y_root)
 
@@ -240,12 +251,11 @@ class Sidebar(ttk.LabelFrame):
 
         if self.main_window.profile_controller:
             try:
-                # Load profile data
+                # Load profile data to get folder
                 profile_data = self.main_window.controller.load_profile(profile_name)
 
-                # Save with new name
+                # Set the folder before saving (it was set during load_profile)
                 self.main_window.controller.save_profile(new_name)
-                self.main_window.profile_controller.rename_profile_folder(new_name, profile_data.get("folder", "Uncategorized"))
 
                 # Delete old profile
                 self.main_window.controller.delete_profile(profile_name)
@@ -290,3 +300,44 @@ class Sidebar(ttk.LabelFrame):
                     messagebox.showerror("Error", f"Failed to move profile")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to move profile: {e}")
+
+    def _create_default_profile_if_needed(self):
+        """Create a default profile if no profiles exist (like Postman)."""
+        if not self.main_window.profile_controller:
+            return
+
+        # Check if any profiles exist
+        profiles = self.main_window.controller.list_profiles()
+        if profiles:
+            return  # Profiles already exist, no need to create default
+
+        try:
+            # Set up default profile data
+            self.main_window.controller.host = "127.0.0.1"
+            self.main_window.controller.port = "1337"
+            self.main_window.controller.mode = "Connect"
+            self.main_window.controller.protocol = "TCP"
+            self.main_window.controller.flavor = "GNU netcat"
+            self.main_window.controller.raw_payload = "hello"
+            self.main_window.controller.editor_mode = "raw_tcp"
+            self.main_window.controller.payload_mode = "Plain text"
+            self.main_window.controller.send_method = "printf"
+            self.main_window.controller.verbose = True
+            self.main_window.controller.no_dns = True
+            self.main_window.controller.timeout = "5"
+            self.main_window.controller.keep_listen = True
+            self.main_window.controller.auto_content_length = False
+
+            # Set folder to "General"
+            self.main_window.controller.set_folder("General")
+
+            # Save the profile
+            self.main_window.controller.save_profile("My First Profile")
+
+            # Refresh to show the new profile
+            self._refresh_profiles()
+
+            # Flash feedback to let user know
+            self.main_window.flash_feedback("Default profile 'My First Profile' created in 'General' folder!")
+        except Exception as e:
+            print(f"Failed to create default profile: {e}")

@@ -111,6 +111,37 @@ nc-command-builder/
 - Application now has cleaner, more focused interface
 - All tests passing after removal
 
+**Profile Sidebar Enhancement (2026-05-29):**
+- Removed "New Profile" and "New Folder" buttons from sidebar
+- Implemented right-click context menu system
+- Right-click on empty space: Shows "New Profile" and "New Folder" options
+- Right-click on folder: Shows folder management options + "New Profile"
+- Right-click on profile: Shows profile management options
+- Added default profile creation system (Postman-like)
+- Creates "My First Profile" in "My Collection" folder if no profiles exist
+- Cleaner interface with better UX consistency
+
+**Window Size Adjustment (2026-05-29):**
+- Main window geometry updated to 1280x900 (from 960x720)
+- Provides more workspace for Postman-like interface
+- Better suited for modern screen resolutions
+
+**Profile Sidebar Folder Fix (2026-05-29):**
+- Fixed bug where all profiles showed as "Uncategorized" regardless of folder assignment
+- Root cause: `save_profile()` method hardcoded folder to "Uncategorized", overwriting any folder assignment
+- Implemented proper folder tracking in AppController state:
+  - Added `current_folder` attribute (default: "General")
+  - Updated `save_profile()` to use `self.current_folder`
+  - Updated `load_profile()` to restore folder from profile data
+  - Added `set_folder()` method for explicit folder assignment
+- Improved profile creation UX:
+  - Right-click on empty space: Creates profile in "General" folder (no dialog)
+  - Right-click on specific folder: Creates profile in that folder
+  - Removed redundant folder dialog when creating from empty space
+- Updated profile rename logic to preserve folder assignment
+- Updated default profile creation to use "General" folder
+- All existing "Uncategorized" profiles remain unchanged (backward compatibility)
+
 ## Previous Session (2026-05-27)
 
 Original single-file MVP with basic netcat command building functionality.

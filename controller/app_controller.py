@@ -16,6 +16,8 @@ class AppController:
         # Application state
         self.current_profile = None
         self.editor_mode = "raw_tcp"  # raw_tcp, get, post
+        self.current_folder = "General"  # Default folder for new profiles
+        self.known_folders = ["General"]  # Track all folders, including empty ones
 
         # Target settings
         self.host = "127.0.0.1"
@@ -239,6 +241,14 @@ class AppController:
         if params is not None:
             self.post_params["params"] = params
 
+    def set_folder(self, folder: str):
+        """Set the current folder for the profile.
+
+        Args:
+            folder: Folder name
+        """
+        self.current_folder = folder
+
     def save_profile(self, name: str) -> str:
         """Save current state as profile.
 
@@ -250,7 +260,7 @@ class AppController:
         """
         profile_data = {
             "name": name,
-            "folder": "Uncategorized",
+            "folder": self.current_folder,
             "editor_mode": self.editor_mode,
             "host": self.host,
             "port": self.port,
@@ -293,6 +303,11 @@ class AppController:
                 setattr(self, key, value)
 
         self.current_profile = name
+
+        # Restore the folder from profile data
+        if "folder" in profile_data:
+            self.current_folder = profile_data["folder"]
+
         return profile_data
 
     def delete_profile(self, name: str) -> bool:
