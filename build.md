@@ -5,7 +5,7 @@
 ## Windows
 
 ```bash
-uv run pyinstaller --icon=icons/netcat-logo.ico --add-data "icons;icons" --onefile --windowed --name "nc-command-builder" main.py
+uv run pyinstaller --icon=icons/netcat-logo.ico --add-data "icons;icons" --onefile --windowed --name "nc-command-builder-win" main.py
 ```
 
 Output: `dist/nc-command-builder.exe`
@@ -13,7 +13,14 @@ Output: `dist/nc-command-builder.exe`
 ## macOS
 
 ```bash
-uv run pyinstaller --icon=icons/netcat-logo.png --add-data "icons:icons" --onefile --windowed --name "nc-command-builder" main.py
+uv run pyinstaller \
+  --windowed \
+  --onedir \
+  --name "nc-command-builder-mac" \
+  --icon icons/netcat-logo.png \
+  --add-data "icons:icons" \
+  --osx-bundle-identifier "com.swarfte.nc-command-builder" \
+  main.py
 ```
 
 Output: `dist/nc-command-builder.app`
@@ -38,7 +45,7 @@ Output: `dist/nc-command-builder.app`
 ## Linux
 
 ```bash
-uv run pyinstaller --onefile --windowed --name "nc-command-builder" main.py
+uv run pyinstaller --onefile --windowed --name "nc-command-builder-linux" main.py
 ```
 
 Output: `dist/nc-command-builder`
