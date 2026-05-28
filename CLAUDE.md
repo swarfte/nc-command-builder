@@ -46,3 +46,11 @@ Everything lives in `main.py` (~550 lines):
 - `tkinterdnd2` — drag-and-drop (declared but not yet used in code)
 - `pygments` — syntax highlighting (declared but not yet used in code)
 - `pyinstaller` — packaging only
+
+# Pre Action
+
+- check log.md to see what you have done before.
+
+# Post Action
+
+- write down what you have done in log.md
