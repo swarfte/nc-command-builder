@@ -34,7 +34,7 @@ def test_imports():
         return False
 
     try:
-        from view import MainWindow, TargetPanel, PayloadEditor, Sidebar, CommandPreview, HelpersPanel
+        from view import MainWindow, TargetPanel, PayloadEditor, Sidebar, CommandPreview
         print("[OK] View imports successful")
     except Exception as e:
         print(f"[FAIL] View imports failed: {e}")

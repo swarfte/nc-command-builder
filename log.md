@@ -25,8 +25,7 @@ nc-command-builder/
 │   ├── target_panel.py         # Top bar: host/port/mode
 │   ├── payload_editor.py       # Postman-like payload editor (3 modes)
 │   ├── sidebar.py              # Left sidebar for profiles with folders
-│   ├── command_preview.py      # Bottom command preview
-│   └── helpers_panel.py        # Helper buttons panel
+│   └── command_preview.py      # Bottom command preview
 ├── controller/                  # Application logic layer
 │   ├── app_controller.py       # Main controller
 │   ├── payload_controller.py   # Payload editing logic
@@ -75,7 +74,7 @@ nc-command-builder/
 
 - **main.py**: Complete rewrite (763 lines → ~50 lines)
 - **model/**: 5 new files with business logic
-- **view/**: 6 new files with UI components
+- **view/**: 5 new files with UI components (helpers panel removed)
 - **controller/**: 4 new files with application logic
 - **utils/**: 1 new file with utility functions
 
@@ -101,6 +100,16 @@ nc-command-builder/
 - ✅ Command generation working for all modes
 - ✅ GET/POST mode functionality verified
 - ✅ Application runs successfully
+
+### Recent Updates
+
+**Helpers Panel Removal (2026-05-29):**
+- Removed `view/helpers_panel.py` (deemed unnecessary)
+- Updated imports in `view/main_window.py` and `view/__init__.py`
+- Removed helpers panel from main window layout
+- Updated test suite to remove HelpersPanel imports
+- Application now has cleaner, more focused interface
+- All tests passing after removal
 
 ## Previous Session (2026-05-27)
 

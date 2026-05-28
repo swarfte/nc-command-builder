@@ -88,7 +88,6 @@ class MainWindow(ttk.Window):
         from view.sidebar import Sidebar
         from view.target_panel import TargetPanel
         from view.payload_editor import PayloadEditor
-        from view.helpers_panel import HelpersPanel
         from view.command_preview import CommandPreview
 
         # Create main layout with sidebar and content area
@@ -116,10 +115,6 @@ class MainWindow(ttk.Window):
         # Payload editor in middle
         self.payload_editor = PayloadEditor(content_area, self)
         self.payload_editor.pack(fill="both", expand=True, padx=8, pady=4)
-
-        # Helpers panel
-        self.helpers_panel = HelpersPanel(content_area, self)
-        self.helpers_panel.pack(fill="x", padx=8, pady=(4, 0))
 
         # Command preview at bottom
         self.command_preview = CommandPreview(content_area, self)
