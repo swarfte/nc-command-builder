@@ -17,7 +17,7 @@ class MainWindow(ttk.Window):
         """
         super().__init__(themename="litera")
         self.title("Netcat Command Builder")
-        self.geometry("960x720")
+        self.geometry("1280x900")
         self.minsize(800, 600)
 
         self.controller = controller
