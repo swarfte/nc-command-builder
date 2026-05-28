@@ -44,6 +44,21 @@ class AppController:
         self.get_params = {}  # path: "", params: {key: value}
         self.post_params = {}  # content_type: "", params: {key: value}
 
+        # Load existing folders from profiles
+        self._load_existing_folders()
+
+    def _load_existing_folders(self):
+        """Load folders from existing profiles to populate known_folders."""
+        try:
+            all_profiles = self.profile_manager.get_all_profile_data()
+            for profile_name, profile_data in all_profiles.items():
+                folder = profile_data.get("folder", "General")
+                if folder and folder not in self.known_folders:
+                    self.known_folders.append(folder)
+        except Exception:
+            # If loading fails, just continue with default folders
+            pass
+
     def get_command(self) -> str:
         """Generate command preview based on current state.
 
@@ -248,6 +263,26 @@ class AppController:
             folder: Folder name
         """
         self.current_folder = folder
+        # Add to known folders if not already there
+        if folder and folder not in self.known_folders:
+            self.known_folders.append(folder)
+
+    def create_folder(self, folder_name: str):
+        """Create a new folder.
+
+        Args:
+            folder_name: Name of the folder to create
+        """
+        if folder_name and folder_name not in self.known_folders:
+            self.known_folders.append(folder_name)
+
+    def get_known_folders(self) -> list:
+        """Get list of all known folders.
+
+        Returns:
+            List of folder names
+        """
+        return self.known_folders.copy()
 
     def save_profile(self, name: str) -> str:
         """Save current state as profile.
@@ -307,6 +342,9 @@ class AppController:
         # Restore the folder from profile data
         if "folder" in profile_data:
             self.current_folder = profile_data["folder"]
+            # Add to known folders if not already there
+            if self.current_folder and self.current_folder not in self.known_folders:
+                self.known_folders.append(self.current_folder)
 
         return profile_data
 

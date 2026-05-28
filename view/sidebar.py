@@ -152,8 +152,16 @@ class Sidebar(ttk.LabelFrame):
         if not folder_name:
             return
 
-        # Folders are created when profiles reference them
-        self.main_window.flash_feedback(f"Folder '{folder_name}' created (add profiles to see it)")
+        try:
+            # Create the folder in controller
+            self.main_window.controller.create_folder(folder_name)
+
+            # Refresh sidebar to show the new folder
+            self._refresh_profiles()
+
+            self.main_window.flash_feedback(f"Folder '{folder_name}' created!")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to create folder: {e}")
 
     def _show_context_menu(self, event):
         """Show context menu for profile management."""

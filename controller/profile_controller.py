@@ -20,9 +20,15 @@ class ProfileController:
         profiles_data = self.app.get_all_profiles_data()
         folders = {}
 
+        # Initialize with all known folders (including empty ones)
+        for folder in self.app.get_known_folders():
+            folders[folder] = []
+
+        # Add profiles to their folders
         for name, data in profiles_data.items():
-            folder = data.get("folder", "Uncategorized")
+            folder = data.get("folder", "General")
             if folder not in folders:
+                # Folder exists in profile but not in known folders - add it
                 folders[folder] = []
             folders[folder].append(name)
 

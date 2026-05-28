@@ -142,6 +142,37 @@ nc-command-builder/
 - Updated default profile creation to use "General" folder
 - All existing "Uncategorized" profiles remain unchanged (backward compatibility)
 
+**Empty Folder Display Fix (2026-05-29):**
+- Fixed bug where newly created folders didn't appear in sidebar until they had profiles
+- Root cause: Sidebar only showed folders that contained profiles (derived from profile data)
+- Implemented folder tracking system:
+  - Added `known_folders` list to AppController to track all folders, including empty ones
+  - Added `create_folder()` method to create folders immediately
+  - Added `get_known_folders()` method to retrieve all folders
+  - Updated `set_folder()` to auto-add unknown folders to known list
+  - Updated `load_profile()` to add profile's folder to known list if missing
+- Updated `get_profiles_by_folder()` to show all known folders, even empty ones
+- Updated `_new_folder_dialog()` to immediately create folder and refresh sidebar
+- Folders now appear immediately after creation, with or without profiles
+- Default folder "General" is always available
+
+**Sidebar Empty on App Startup Fix (2026-05-29):**
+- Fixed bug where sidebar appeared empty when reopening the app
+- Root cause: Sidebar initialized before controllers were set, so `_refresh_profiles()` returned early
+- Initialization sequence issue:
+  1. MainWindow created with AppController
+  2. MainWindow._build_ui() creates Sidebar
+  3. Sidebar._refresh_profiles() called, but profile_controller is None
+  4. Controllers set later via set_controller_refs()
+- Fixed by adding sidebar refresh in set_controller_refs():
+  - After profile_controller is set, trigger sidebar._refresh_profiles()
+  - This ensures existing profiles are displayed on app startup
+- Added `_load_existing_folders()` to AppController.__init__():
+  - Scans all existing profiles on startup
+  - Populates known_folders with folders from existing profiles
+  - Ensures folders are preserved across app sessions
+- All existing profiles and folders now display correctly when app is reopened
+
 ## Previous Session (2026-05-27)
 
 Original single-file MVP with basic netcat command building functionality.

@@ -190,3 +190,7 @@ class MainWindow(ttk.Window):
         self.payload_controller = payload_controller
         self.profile_controller = profile_controller
         self.command_controller = command_controller
+
+        # Refresh sidebar now that profile_controller is available
+        if hasattr(self, 'sidebar'):
+            self.sidebar._refresh_profiles()
