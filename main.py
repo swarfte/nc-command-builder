@@ -53,11 +53,50 @@ _URL_SAFE = frozenset(
 )
 
 
+def _interpret_escapes(text: str) -> str:
+    """Convert escape sequences to actual characters.
+
+    \\n → LF, \\r → CR, \\t → TAB, \\xNN → hex byte, \\0 → null,
+    \\\\ → literal backslash.  Other \\X sequences kept as-is.
+    """
+    out = []
+    i = 0
+    while i < len(text):
+        if text[i] == '\\' and i + 1 < len(text):
+            nxt = text[i + 1]
+            if nxt == 'n':
+                out.append('\n'); i += 2
+            elif nxt == 'r':
+                out.append('\r'); i += 2
+            elif nxt == 't':
+                out.append('\t'); i += 2
+            elif nxt == '0':
+                out.append('\0'); i += 2
+            elif nxt in ('x', 'X') and i + 3 < len(text):
+                hx = text[i + 2:i + 4]
+                try:
+                    out.append(chr(int(hx, 16))); i += 4
+                except ValueError:
+                    out.append(text[i]); i += 1
+            elif nxt == '\\':
+                out.append('\\'); i += 2
+            else:
+                out.append(text[i]); i += 1
+        else:
+            out.append(text[i]); i += 1
+    return ''.join(out)
+
+
 def _url_encode_uri(uri: str, pct: str) -> str:
-    """URL-encode a URI using %%XX (printf) or %XX (echo -e) format."""
+    """URL-encode a URI using %%XX (printf) or %XX (echo -e) format.
+
+    Escape sequences (\\n, \\r, \\t, \\xNN, \\0) are first converted
+    to actual bytes so that \\n becomes %%0A (LF) instead of %%5Cn.
+    """
+    decoded = _interpret_escapes(uri)
     return ''.join(
         f'{pct}{ord(ch):02X}' if ch not in _URL_SAFE else ch
-        for ch in uri
+        for ch in decoded
     )
 
 
@@ -480,55 +519,11 @@ class NcCommandBuilder(ttk.Window):
         self.payload_text.insert("1.0", trimmed)
         self._update_preview()
 
-    @staticmethod
-    def _interpret_escapes(text: str) -> bytes:
-        """Convert escape sequences to actual bytes before URL-encoding.
-
-        \\n → LF (0x0A), \\r → CR (0x0D), \\t → TAB (0x09),
-        \\xNN → hex byte, \\0 → null, \\\\ → literal backslash.
-        """
-        out = bytearray()
-        i = 0
-        while i < len(text):
-            if text[i] == '\\' and i + 1 < len(text):
-                nxt = text[i + 1]
-                if nxt == 'n':
-                    out.append(0x0A)
-                    i += 2
-                elif nxt == 'r':
-                    out.append(0x0D)
-                    i += 2
-                elif nxt == 't':
-                    out.append(0x09)
-                    i += 2
-                elif nxt == '0':
-                    out.append(0x00)
-                    i += 2
-                elif nxt in ('x', 'X') and i + 3 < len(text):
-                    hex_str = text[i + 2:i + 4]
-                    try:
-                        out.append(int(hex_str, 16))
-                        i += 4
-                        continue
-                    except ValueError:
-                        out.append(ord(text[i]))
-                        i += 1
-                elif nxt == '\\':
-                    out.append(ord('\\'))
-                    i += 2
-                else:
-                    out.append(ord(text[i]))
-                    i += 1
-            else:
-                out.extend(text[i].encode('utf-8'))
-                i += 1
-        return bytes(out)
-
     def _url_encode(self):
         import urllib.parse
         payload = self.payload_text.get("1.0", "end-1c")
-        raw_bytes = self._interpret_escapes(payload)
-        encoded = urllib.parse.quote(raw_bytes.decode('latin-1'), safe="")
+        decoded = _interpret_escapes(payload)
+        encoded = urllib.parse.quote(decoded, safe="")
         self.payload_text.delete("1.0", "end")
         self.payload_text.insert("1.0", encoded)
         self._update_preview()
