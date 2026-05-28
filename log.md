@@ -215,6 +215,29 @@ nc-command-builder/
 - Profiles now maintain complete state across sessions
 - When switching profiles or reopening app, user sees exact same configuration
 
+**Critical Profile Switching Bug Fix (2026-05-29):**
+- Fixed critical bug where all profiles appeared to have the same content when switching
+- Root cause: `_load_selected_profile()` was calling `_update_preview()` after `sync_from_controller()`
+- This caused newly loaded profile data to be overwritten with old UI state
+- Incorrect flow:
+  1. Load profile B into controller
+  2. Sync UI from controller (UI now shows profile B)
+  3. Call `_update_preview()` which syncs UI variables TO controller
+  4. Controller state overwritten with old UI data
+  5. All profiles end up with the same content
+- Fixed flow:
+  1. Auto-save current profile (if any) with current UI state
+  2. Load new profile into controller
+  3. Sync UI from controller (UI shows loaded profile)
+  4. Update command preview only (no sync back to controller)
+- Updated `_load_selected_profile()` method:
+  - Removed problematic `_update_preview()` call after `sync_from_controller()`
+  - Added specific command preview update instead
+  - Ensures proper data flow: profile → controller → UI
+- Profiles now maintain their unique data when switching
+- Each profile correctly displays its own saved settings
+- No more data corruption when switching between profiles
+
 ## Previous Session (2026-05-27)
 
 Original single-file MVP with basic netcat command building functionality.

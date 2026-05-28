@@ -121,10 +121,15 @@ class Sidebar(ttk.LabelFrame):
                     # Save the current profile silently
                     self.main_window.controller.save_profile(current_profile)
 
-                # Load the new profile
+                # Load the new profile (this updates controller state)
                 self.main_window.controller.load_profile(profile_name)
+
+                # Sync UI from controller (this updates UI to match loaded profile)
                 self.main_window.sync_from_controller()
-                self.main_window._update_preview()
+
+                # Update command preview only (don't sync back to controller!)
+                if hasattr(self.main_window, 'command_preview'):
+                    self.main_window.command_preview.update_preview()
 
                 # Show appropriate feedback message
                 if current_profile:
