@@ -20,7 +20,7 @@ _URL_SAFE = frozenset(
 TEMPLATES = {
     "Custom": "",
     "Raw TCP line": "hello",
-    "HTTP GET": r"GET /?flag=pwn HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n",
+    "HTTP GET": r"GET / HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n",
     "HTTP POST": (
         r"POST / HTTP/1.1\r\n"
         r"Host: {host}\r\n"

@@ -84,7 +84,7 @@ Pick a template from the dropdown to auto-fill the payload:
 | Template     | Payload                                              |
 | ------------ | ---------------------------------------------------- |
 | Raw TCP line | `hello`                                            |
-| HTTP GET     | `GET /?flag=pwn HTTP/1.1\r\nHost: {host}\r\n...`   |
+| HTTP GET     | `GET / HTTP/1.1\r\nHost: {host}\r\n...`            |
 | HTTP POST    | `POST / HTTP/1.1\r\nHost: {host}\r\n...data=hello` |
 | Redis PING   | `PING\r\n`                                         |
 | SMTP HELO    | `HELO localhost\r\n`                               |
@@ -111,7 +111,7 @@ printf "hello" | nc -v -n -w 5 127.0.0.1 1337
 With an HTTP GET template:
 
 ```
-printf "GET /?flag=pwn HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n" | nc -v -n -w 5 127.0.0.1 1337
+printf "GET / HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n" | nc -v -n -w 5 127.0.0.1 1337
 ```
 
 ## Profiles

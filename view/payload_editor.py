@@ -322,6 +322,9 @@ class PayloadEditor(ttk.LabelFrame):
             template_name = self.var_template.get()
             payload, suggested_mode = self.main_window.payload_controller.apply_template(template_name)
 
+            # Update controller with template selection
+            self.main_window.controller.template = template_name
+
             # Update raw text
             if self.raw_text:
                 self.raw_text.delete("1.0", "end")
@@ -359,6 +362,10 @@ class PayloadEditor(ttk.LabelFrame):
 
     def load_from_controller(self):
         """Load data from controller into UI."""
+        # Load template selection
+        if hasattr(self.main_window.controller, 'template'):
+            self.var_template.set(self.main_window.controller.template)
+
         # Load raw payload
         if self.raw_text:
             self.raw_text.delete("1.0", "end")

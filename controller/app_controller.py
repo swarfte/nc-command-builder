@@ -29,6 +29,7 @@ class AppController:
         # Payload settings
         self.payload_mode = "Escapes (\\r\\n, \\x41)"
         self.send_method = "printf"
+        self.template = "Custom"  # Current template selection
 
         # Options
         self.verbose = True
@@ -304,6 +305,7 @@ class AppController:
             "flavor": self.flavor,
             "payload_mode": self.payload_mode,
             "send_method": self.send_method,
+            "template": self.template,
             "verbose": self.verbose,
             "no_dns": self.no_dns,
             "timeout": self.timeout,
@@ -317,7 +319,9 @@ class AppController:
             "post_params": self.post_params,
         }
 
-        return self.profile_manager.save_profile(name, profile_data)
+        result = self.profile_manager.save_profile(name, profile_data)
+        self.current_profile = name
+        return result
 
     def load_profile(self, name: str) -> dict:
         """Load profile and update current state.

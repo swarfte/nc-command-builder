@@ -95,7 +95,7 @@ class Sidebar(ttk.LabelFrame):
                 self.profile_list.insert(results_id, "end", text=profile_name, values=(profile_name,))
 
     def _load_selected_profile(self):
-        """Load selected profile."""
+        """Load selected profile with auto-save of current profile first."""
         selection = self.profile_list.selection()
         if not selection:
             return
@@ -110,13 +110,27 @@ class Sidebar(ttk.LabelFrame):
         # Get profile name
         profile_name = item_text
 
-        # Load profile
+        # Load profile with auto-save
         if self.main_window.profile_controller:
             try:
+                # Auto-save current profile before switching (if there is one)
+                current_profile = self.main_window.controller.current_profile
+                if current_profile:
+                    # Sync current UI state to controller first
+                    self.main_window._update_preview()
+                    # Save the current profile silently
+                    self.main_window.controller.save_profile(current_profile)
+
+                # Load the new profile
                 self.main_window.controller.load_profile(profile_name)
                 self.main_window.sync_from_controller()
                 self.main_window._update_preview()
-                self.main_window.flash_feedback(f"Profile '{profile_name}' loaded!")
+
+                # Show appropriate feedback message
+                if current_profile:
+                    self.main_window.flash_feedback(f"Saved '{current_profile}' → Loaded '{profile_name}'!")
+                else:
+                    self.main_window.flash_feedback(f"Profile '{profile_name}' loaded!")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load profile: {e}")
 

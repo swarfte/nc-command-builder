@@ -17,7 +17,7 @@ class MainWindow(ttk.Window):
         """
         super().__init__(themename="litera")
         self.title("Netcat Command Builder")
-        self.geometry("1280x900")
+        self.geometry("1600x900")
         self.minsize(800, 600)
 
         self.controller = controller
@@ -33,6 +33,9 @@ class MainWindow(ttk.Window):
 
         # Build UI components
         self._build_ui()
+
+        # Set up keyboard shortcuts
+        self._setup_shortcuts()
 
         # Update initial command preview
         self._update_preview()
@@ -194,3 +197,26 @@ class MainWindow(ttk.Window):
         # Refresh sidebar now that profile_controller is available
         if hasattr(self, 'sidebar'):
             self.sidebar._refresh_profiles()
+
+    def _setup_shortcuts(self):
+        """Set up keyboard shortcuts."""
+        # Ctrl+S to save profile
+        self.bind('<Control-s>', lambda e: self._save_current_profile())
+
+    def _save_current_profile(self):
+        """Save current profile (called by Ctrl+S)."""
+        if self.controller.current_profile:
+            # Sync current state to controller
+            self._update_preview()
+
+            # Save the current profile
+            try:
+                self.controller.save_profile(self.controller.current_profile)
+                self.flash_feedback(f"Profile '{self.controller.current_profile}' saved!")
+            except Exception as e:
+                from tkinter import messagebox
+                messagebox.showerror("Error", f"Failed to save profile: {e}")
+        else:
+            # No current profile, show save as dialog
+            if hasattr(self, 'sidebar'):
+                self.sidebar._save_profile_dialog()
