@@ -13,10 +13,7 @@
 
 
     <!-- sidebar content -->
-    <div
-      class="flex-1 overflow-y-auto p-2 relative bg-gray-50"
-      @contextmenu.self.prevent="handleSidebarContextMenu"
-    >
+    <div class="flex-1 overflow-y-auto p-2 relative bg-gray-50" @contextmenu.self.prevent="handleSidebarContextMenu">
       <div v-for="folder in folderList" :key="folder.id" class="mb-1">
         <!-- folder header -->
         <div class="flex items-center gap-2 p-2 rounded hover:bg-gray-200 cursor-pointer group"
@@ -68,8 +65,8 @@
         <span>New Folder</span>
       </button>
 
-      <div v-if="contextMenu.options.showDuplicate || contextMenu.options.showRename || contextMenu.options.showDelete"
-        class="border-t border-gray-200 my-1"></div>
+      <!-- <div v-if="contextMenu.options.showDuplicate || contextMenu.options.showRename || contextMenu.options.showDelete"
+        class="border-t border-gray-200 my-1"></div> -->
 
       <button v-if="contextMenu.options.showDuplicate"
         class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2" @click="handleDuplicate">
@@ -85,14 +82,16 @@
       </button>
 
       <button v-if="contextMenu.options.showDelete"
-        class="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2" @click="handleDelete">
+        class="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
+        @click="handleDelete">
         <TrashIcon class="size-4" />
         <span>Delete</span>
       </button>
     </div>
 
     <!-- new folder dialog -->
-    <div v-if="showNewFolderDialog" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black bg-opacity-50">
+    <div v-if="showNewFolderDialog"
+      class="fixed inset-0 z-[10000] flex items-center justify-center bg-black bg-opacity-50">
       <div class="bg-white rounded-lg shadow-xl p-6 w-96">
         <h3 class="text-lg font-semibold mb-4">Create New Folder</h3>
         <input ref="folderNameInput" v-model="newFolderName"
@@ -111,12 +110,14 @@
     </div>
 
     <!-- rename profile dialog -->
-    <div v-if="showRenameProfileDialog" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black bg-opacity-50">
+    <div v-if="showRenameProfileDialog"
+      class="fixed inset-0 z-[10000] flex items-center justify-center bg-black bg-opacity-50">
       <div class="bg-white rounded-lg shadow-xl p-6 w-96">
         <h3 class="text-lg font-semibold mb-4">Rename Profile</h3>
         <input ref="renameProfileInput" v-model="renameProfileName"
           class="w-full rounded-md border border-gray-300 px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          type="text" placeholder="Enter profile name" @keyup.enter="confirmRenameProfile" @keyup.esc="cancelRenameProfile" />
+          type="text" placeholder="Enter profile name" @keyup.enter="confirmRenameProfile"
+          @keyup.esc="cancelRenameProfile" />
         <div class="flex justify-end gap-2">
           <button class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md" @click="cancelRenameProfile">
             Cancel
@@ -130,12 +131,14 @@
     </div>
 
     <!-- rename folder dialog -->
-    <div v-if="showRenameFolderDialog" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black bg-opacity-50">
+    <div v-if="showRenameFolderDialog"
+      class="fixed inset-0 z-[10000] flex items-center justify-center bg-black bg-opacity-50">
       <div class="bg-white rounded-lg shadow-xl p-6 w-96">
         <h3 class="text-lg font-semibold mb-4">Rename Folder</h3>
         <input ref="renameFolderInput" v-model="renameFolderName"
           class="w-full rounded-md border border-gray-300 px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          type="text" placeholder="Enter folder name" @keyup.enter="confirmRenameFolder" @keyup.esc="cancelRenameFolder" />
+          type="text" placeholder="Enter folder name" @keyup.enter="confirmRenameFolder"
+          @keyup.esc="cancelRenameFolder" />
         <div class="flex justify-end gap-2">
           <button class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md" @click="cancelRenameFolder">
             Cancel
@@ -151,7 +154,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   FolderPlusIcon,
   DocumentPlusIcon,
@@ -174,7 +177,7 @@ const currentProfile = computed(() => profileStore.currentProfile)
 const folderList = computed(() => folderStore.folderList)
 
 // Track expanded folders
-const expandedFolders = ref<Set<string>>(new Set(['General']))
+const expandedFolders = ref<Set<string>>(new Set(['-1'])) // -1 is the General folder ID
 
 // Context menu state
 interface ContextMenuOptions {
@@ -245,7 +248,7 @@ const closeContextMenu = () => {
 // Handle sidebar context menu (empty area)
 const handleSidebarContextMenu = (event: MouseEvent) => {
   console.log('Sidebar context menu triggered')
-  const generalFolder = folderList.value.find(f => f.folderName === 'General')
+  const generalFolder = folderStore.getFolderById('-1') // Get General folder by ID
 
   contextMenu.value = {
     show: true,
@@ -266,6 +269,8 @@ const handleSidebarContextMenu = (event: MouseEvent) => {
 
 // Handle folder context menu
 const handleFolderContextMenu = (event: MouseEvent, folder: Folder) => {
+  const isGeneralFolder = folder.folderName === 'General'
+
   contextMenu.value = {
     show: true,
     x: event.clientX,
@@ -273,9 +278,9 @@ const handleFolderContextMenu = (event: MouseEvent, folder: Folder) => {
     options: {
       showNewProfile: true,
       showNewFolder: false,
-      showDuplicate: true,
-      showRename: true,
-      showDelete: folder.folderName !== 'General', // Can't delete General folder
+      showDuplicate: !isGeneralFolder, // Can't duplicate General folder
+      showRename: !isGeneralFolder,    // Can't rename General folder
+      showDelete: !isGeneralFolder,    // Can't delete General folder
     },
     targetFolder: folder,
     targetProfile: undefined,
@@ -284,6 +289,8 @@ const handleFolderContextMenu = (event: MouseEvent, folder: Folder) => {
 
 // Handle profile context menu
 const handleProfileContextMenu = (event: MouseEvent, folder: Folder, profile: Profile) => {
+  const isDefaultProfile = profile.id === 'default-profile' && folder.folderName === 'General'
+
   contextMenu.value = {
     show: true,
     x: event.clientX,
@@ -291,9 +298,9 @@ const handleProfileContextMenu = (event: MouseEvent, folder: Folder, profile: Pr
     options: {
       showNewProfile: false,
       showNewFolder: false,
-      showDuplicate: true,
-      showRename: true,
-      showDelete: true,
+      showDuplicate: !isDefaultProfile, // Can't duplicate default profile
+      showRename: !isDefaultProfile,    // Can't rename default profile
+      showDelete: !isDefaultProfile,    // Can't delete default profile
     },
     targetFolder: folder,
     targetProfile: profile,
@@ -481,13 +488,29 @@ const cancelRenameFolder = () => {
 const handleDelete = () => {
   if (contextMenu.value.targetProfile && contextMenu.value.targetFolder) {
     // Delete profile
+    const isDefaultProfile = contextMenu.value.targetProfile.id === 'default-profile' &&
+      contextMenu.value.targetFolder.folderName === 'General'
+
+    if (isDefaultProfile) {
+      alert('Cannot delete the default profile.')
+      closeContextMenu()
+      return
+    }
+
     if (confirm(`Are you sure you want to delete "${contextMenu.value.targetProfile.profileName}"?`)) {
       try {
         folderStore.deleteProfileFromFolder(contextMenu.value.targetFolder.id, contextMenu.value.targetProfile.id)
 
         // If deleted profile was current, reset to default
         if (profileStore.currentProfile.id === contextMenu.value.targetProfile.id) {
-          profileStore.resetProfile()
+          // Load the default profile from General folder
+          const generalFolder = folderStore.getFolderById('-1')
+          if (generalFolder && generalFolder.profiles.length > 0) {
+            const defaultProfile = generalFolder.profiles.find(p => p.id === 'default-profile')
+            if (defaultProfile) {
+              profileStore.loadProfile(defaultProfile)
+            }
+          }
         }
       } catch (error) {
         alert(error instanceof Error ? error.message : 'Failed to delete profile')
@@ -506,4 +529,17 @@ const handleDelete = () => {
 
   closeContextMenu()
 }
+
+// Initialize default profile on component mount
+onMounted(() => {
+  // Check if we should load the default profile from General folder
+  const generalFolder = folderStore.getFolderById('-1')
+  if (generalFolder && generalFolder.profiles.length > 0) {
+    const defaultProfile = generalFolder.profiles.find(p => p.id === 'default-profile')
+    if (defaultProfile && profileStore.currentProfile.profileName === 'default') {
+      // Only load if current profile is still the default one (user hasn't modified it)
+      profileStore.loadProfile(defaultProfile)
+    }
+  }
+})
 </script>

@@ -35,7 +35,30 @@ export const useFolderStore = defineStore(
       [generalFolderId]: {
         id: generalFolderId,
         folderName: "General",
-        profiles: [],
+        profiles: [
+          {
+            id: "default-profile",
+            version: "1.0",
+            profileName: "default",
+            host: "localhost",
+            port: 8080,
+            targetMode: "connect",
+            protocol: "TCP",
+            flavor: "GNU netcat",
+            payloadMode: "GET",
+            outputType: "printf",
+            query: "",
+            body: "",
+            contentType: "text/plain",
+            connection: "close",
+            isVerbose: true,
+            isNoDNS: false,
+            isKeepListening: true,
+            timeout: 5,
+            closeDelay: 0,
+            bindCommand: "",
+          },
+        ],
       },
     });
 
@@ -213,7 +236,7 @@ export const useProfileStore = defineStore(
   },
   {
     persist: {
-      key: "nc-current-profile-v1",
+      key: "nc-current-profile-v2",
       storage: localStorage,
     },
   },
