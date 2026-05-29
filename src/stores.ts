@@ -1,12 +1,38 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import type { Profile, Folder } from "./models";
+
+function createDefaultProfile(): Profile {
+  return {
+    id: crypto.randomUUID(),
+    version: "1.0",
+    profileName: "default",
+    host: "localhost",
+    port: 8080,
+    targetMode: "connect",
+    protocol: "TCP",
+    flavor: "GNU netcat",
+    payloadMode: "GET",
+    outputType: "printf",
+    query: "",
+    body: "",
+    contentType: "text/plain",
+    connection: "close",
+    isVerbose: true,
+    isNoDNS: false,
+    isKeepListening: true,
+    timeout: 5,
+    closeDelay: 0,
+    bindCommand: "",
+  };
+}
 
 export const useFolderStore = defineStore(
   "folder",
   () => {
     const folderDict = ref<Record<string, Folder>>({
       General: {
+        id: crypto.randomUUID(),
         folderName: "General",
         profiles: [],
       },
@@ -17,6 +43,7 @@ export const useFolderStore = defineStore(
         throw new Error(`Folder with name ${folderName} already exists.`);
       }
       folderDict.value[folderName] = {
+        id: crypto.randomUUID(),
         folderName,
         profiles: [],
       };
@@ -24,6 +51,10 @@ export const useFolderStore = defineStore(
     };
 
     const deleteFolder = (folderName: string) => {
+      if (folderName === "General") {
+        throw new Error("General folder cannot be deleted.");
+      }
+
       if (!folderDict.value[folderName]) {
         throw new Error(`Folder with name ${folderName} does not exist.`);
       }
@@ -35,25 +66,45 @@ export const useFolderStore = defineStore(
       if (!folderDict.value[folderName]) {
         throw new Error(`Folder with name ${folderName} does not exist.`);
       }
-      folderDict.value[folderName].profiles.push(profile);
+
+      folderDict.value[folderName].profiles.push(structuredClone(profile));
       return true;
     };
 
-    const deleteProfileFromFolder = (
-      folderName: string,
-      profileName: string,
-    ) => {
+    const updateProfileInFolder = (folderName: string, profile: Profile) => {
       if (!folderDict.value[folderName]) {
         throw new Error(`Folder with name ${folderName} does not exist.`);
       }
-      const profileIndex = folderDict.value[folderName].profiles.findIndex(
-        (p) => p.profileName === profileName,
+
+      const index = folderDict.value[folderName].profiles.findIndex(
+        (p) => p.id === profile.id,
       );
-      if (profileIndex === -1) {
+
+      if (index === -1) {
         throw new Error(
-          `Profile with name ${profileName} does not exist in folder ${folderName}.`,
+          `Profile with id ${profile.id} does not exist in folder ${folderName}.`,
         );
       }
+
+      folderDict.value[folderName].profiles[index] = structuredClone(profile);
+      return true;
+    };
+
+    const deleteProfileFromFolder = (folderName: string, profileId: string) => {
+      if (!folderDict.value[folderName]) {
+        throw new Error(`Folder with name ${folderName} does not exist.`);
+      }
+
+      const profileIndex = folderDict.value[folderName].profiles.findIndex(
+        (p) => p.id === profileId,
+      );
+
+      if (profileIndex === -1) {
+        throw new Error(
+          `Profile with id ${profileId} does not exist in folder ${folderName}.`,
+        );
+      }
+
       folderDict.value[folderName].profiles.splice(profileIndex, 1);
       return true;
     };
@@ -63,11 +114,13 @@ export const useFolderStore = defineStore(
       addFolder,
       deleteFolder,
       addProfileToFolder,
+      updateProfileInFolder,
       deleteProfileFromFolder,
     };
   },
   {
     persist: {
+      key: "nc-folder-store-v1",
       storage: localStorage,
     },
   },
@@ -77,54 +130,48 @@ export const useFolderStore = defineStore(
 export const useProfileStore = defineStore(
   "profile",
   () => {
-    const profileName = ref<string>("default");
-    const folderName = ref<string>("General");
-    const host = ref<string>("localhost");
-    const port = ref<number>(8080);
-    const targetMode = ref<string>("connect");
-    const protocol = ref<string>("TCP");
-    const flavor = ref<string>("GNU netcat");
-    const payloadMode = ref<string>("GET");
-    const outputType = ref<string>("printf");
-    const outputCommand = ref<string>("");
-    const query = ref<string>("");
-    const body = ref<string>("");
-    const contentType = ref<string>("text/plain");
-    const contentLength = ref<number>(0);
-    const connection = ref<string>("close");
-    const isVerbose = ref<boolean>(true);
-    const isNoDNS = ref<boolean>(false);
-    const isKeepListening = ref<boolean>(true);
-    const timeout = ref<number>(5);
-    const closeDelay = ref<number>(0);
-    const bindCommand = ref<string>("");
+    const currentProfile = ref<Profile>(createDefaultProfile());
+
+    const resetProfile = () => {
+      currentProfile.value = createDefaultProfile();
+    };
+
+    const loadProfile = (profile: Profile) => {
+      currentProfile.value = structuredClone(profile);
+    };
+
+    const updateProfile = (patch: Partial<Profile>) => {
+      currentProfile.value = {
+        ...currentProfile.value,
+        ...patch,
+      };
+    };
+
+    const outputCommand = computed(() => {
+      // TODO : generate the full command base on the current profile
+      return "nc command goes here";
+      // const p = currentProfile.value;
+      // const parts = ["nc"];
+      // if (p.isVerbose) parts.push("-v");
+      // if (p.isNoDNS) parts.push("-n");
+      // if (p.isKeepListening) parts.push("-k");
+      // if (p.timeout) parts.push(`-w ${p.timeout}`);
+      // parts.push(p.host);
+      // parts.push(String(p.port));
+      // return parts.join(" ");
+    });
 
     return {
-      profileName,
-      folderName,
-      host,
-      port,
-      targetMode,
-      protocol,
-      flavor,
-      payloadMode,
-      outputType,
+      currentProfile,
+      resetProfile,
+      loadProfile,
+      updateProfile,
       outputCommand,
-      query,
-      body,
-      contentType,
-      contentLength,
-      connection,
-      isVerbose,
-      isNoDNS,
-      isKeepListening,
-      timeout,
-      closeDelay,
-      bindCommand,
     };
   },
   {
     persist: {
+      key: "nc-current-profile-v1",
       storage: localStorage,
     },
   },

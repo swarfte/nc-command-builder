@@ -1,5 +1,6 @@
 export interface Profile {
-  folderName: string;
+  id: string;
+  version: string;
   profileName: string;
   host: string;
   port: number;
@@ -8,11 +9,9 @@ export interface Profile {
   flavor: string;
   payloadMode: string;
   outputType: string;
-  outputCommand: string;
   query?: string;
   body?: string;
   contentType: string;
-  contentLength: number;
   connection: string;
   isVerbose: boolean;
   isNoDNS: boolean;
@@ -23,6 +22,7 @@ export interface Profile {
 }
 
 export interface Folder {
+  id: string;
   folderName: string;
   profiles: Profile[];
 }
