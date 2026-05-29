@@ -2,5 +2,5 @@
 </script>
 
 <template>
-  <p>123</p>
+  <p class="text-red-500">1234</p>
 </template>
