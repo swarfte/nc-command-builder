@@ -6,13 +6,12 @@
 
         <!-- Basic Configuration -->
         <div class="mb-4">
-          <h3 class="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Basic</h3>
+          <!-- <h3 class="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Basic</h3> -->
           <div class="grid grid-cols-5 gap-2">
             <!-- Host -->
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Host</label>
-              <input
-                v-model="localConfig.host"
+              <input v-model="localConfig.host"
                 class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 type="text" placeholder="localhost" />
             </div>
@@ -20,8 +19,7 @@
             <!-- Port -->
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Port</label>
-              <input
-                v-model.number="localConfig.port"
+              <input v-model.number="localConfig.port"
                 class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 type="number" placeholder="8080" />
             </div>
@@ -29,8 +27,7 @@
             <!-- Operation Mode -->
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Mode</label>
-              <select
-                v-model="localConfig.targetMode"
+              <select v-model="localConfig.targetMode"
                 class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
                 <option value="connect">Connect</option>
                 <option value="listen">Listen</option>
@@ -40,8 +37,7 @@
             <!-- Protocol -->
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Protocol</label>
-              <select
-                v-model="localConfig.protocol"
+              <select v-model="localConfig.protocol"
                 class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
                 <option value="TCP">TCP</option>
                 <option value="UDP">UDP</option>
@@ -51,8 +47,7 @@
             <!-- NC Flavor -->
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Netcat Flavor</label>
-              <select
-                v-model="localConfig.flavor"
+              <select v-model="localConfig.flavor"
                 class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
                 <option value="GNU netcat">GNU netcat</option>
                 <option value="OpenBSD netcat">OpenBSD netcat</option>
@@ -64,58 +59,17 @@
           </div>
         </div>
 
-        <!-- Network Options -->
-        <div class="mb-4">
-          <h3 class="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Network</h3>
-          <div class="grid grid-cols-3 gap-2">
-            <!-- Verbose -->
-            <label class="flex items-center gap-2 p-2 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer">
-              <input
-                v-model="localConfig.isVerbose"
-                class="size-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                type="checkbox" />
-              <div class="flex-1">
-                <span class="text-xs font-medium text-gray-700">Verbose</span>
-                <span class="ml-1 text-xs text-gray-400">(-v)</span>
-              </div>
-            </label>
 
-            <!-- No DNS -->
-            <label class="flex items-center gap-2 p-2 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer">
-              <input
-                v-model="localConfig.isNoDNS"
-                class="size-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                type="checkbox" />
-              <div class="flex-1">
-                <span class="text-xs font-medium text-gray-700">No DNS</span>
-                <span class="ml-1 text-xs text-gray-400">(-n)</span>
-              </div>
-            </label>
-
-            <!-- Keep Listening -->
-            <label class="flex items-center gap-2 p-2 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer">
-              <input
-                v-model="localConfig.isKeepListening"
-                class="size-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                type="checkbox" />
-              <div class="flex-1">
-                <span class="text-xs font-medium text-gray-700">Keep Listening</span>
-                <span class="ml-1 text-xs text-gray-400">(-k)</span>
-              </div>
-            </label>
-          </div>
-        </div>
 
         <!-- Advanced Options -->
         <div class="mb-4">
-          <h3 class="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Advanced</h3>
+          <!-- <h3 class="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Advanced</h3> -->
           <div class="grid grid-cols-3 gap-2">
             <!-- Timeout -->
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Timeout</label>
               <div class="relative">
-                <input
-                  v-model.number="localConfig.timeout"
+                <input v-model.number="localConfig.timeout"
                   class="w-full rounded border border-gray-300 px-2 py-1.5 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="number" placeholder="5" />
                 <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">-w</span>
@@ -126,8 +80,7 @@
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Close Delay</label>
               <div class="relative">
-                <input
-                  v-model.number="localConfig.closeDelay"
+                <input v-model.number="localConfig.closeDelay"
                   class="w-full rounded border border-gray-300 px-2 py-1.5 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="number" placeholder="0" />
                 <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">-q</span>
@@ -138,13 +91,47 @@
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Bind Script</label>
               <div class="relative">
-                <input
-                  v-model="localConfig.bindCommand"
+                <input v-model="localConfig.bindCommand"
                   class="w-full rounded border border-gray-300 px-2 py-1.5 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="shell command" />
                 <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">-s</span>
               </div>
             </div>
+          </div>
+        </div>
+        <!-- Network Options -->
+        <div class="mb-4">
+          <!-- <h3 class="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Network</h3> -->
+          <div class="grid grid-cols-3 gap-2">
+            <!-- Verbose -->
+            <label class="flex items-center gap-2 p-2 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer">
+              <input v-model="localConfig.isVerbose"
+                class="size-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" type="checkbox" />
+              <div class="flex-1">
+                <span class="text-xs font-medium text-gray-700">Verbose</span>
+                <span class="ml-1 text-xs text-gray-400">(-v)</span>
+              </div>
+            </label>
+
+            <!-- No DNS -->
+            <label class="flex items-center gap-2 p-2 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer">
+              <input v-model="localConfig.isNoDNS"
+                class="size-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" type="checkbox" />
+              <div class="flex-1">
+                <span class="text-xs font-medium text-gray-700">No DNS</span>
+                <span class="ml-1 text-xs text-gray-400">(-n)</span>
+              </div>
+            </label>
+
+            <!-- Keep Listening -->
+            <label class="flex items-center gap-2 p-2 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer">
+              <input v-model="localConfig.isKeepListening"
+                class="size-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" type="checkbox" />
+              <div class="flex-1">
+                <span class="text-xs font-medium text-gray-700">Keep Listening</span>
+                <span class="ml-1 text-xs text-gray-400">(-k)</span>
+              </div>
+            </label>
           </div>
         </div>
       </div>
