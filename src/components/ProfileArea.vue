@@ -269,7 +269,7 @@ const handleSidebarContextMenu = (event: MouseEvent) => {
 
 // Handle folder context menu
 const handleFolderContextMenu = (event: MouseEvent, folder: Folder) => {
-  const isGeneralFolder = folder.folderName === 'General'
+  const isGeneralFolder = folder.id === '-1' // General folder has ID "-1"
 
   contextMenu.value = {
     show: true,
@@ -278,9 +278,9 @@ const handleFolderContextMenu = (event: MouseEvent, folder: Folder) => {
     options: {
       showNewProfile: true,
       showNewFolder: false,
-      showDuplicate: !isGeneralFolder, // Can't duplicate General folder
-      showRename: !isGeneralFolder,    // Can't rename General folder
-      showDelete: !isGeneralFolder,    // Can't delete General folder
+      showDuplicate: true,      // Can duplicate any folder including General
+      showRename: true,         // Can rename any folder including General
+      showDelete: !isGeneralFolder, // Only restriction: can't delete General folder
     },
     targetFolder: folder,
     targetProfile: undefined,
@@ -289,7 +289,7 @@ const handleFolderContextMenu = (event: MouseEvent, folder: Folder) => {
 
 // Handle profile context menu
 const handleProfileContextMenu = (event: MouseEvent, folder: Folder, profile: Profile) => {
-  const isDefaultProfile = profile.id === 'default-profile' && folder.folderName === 'General'
+  const isDefaultProfile = profile.id === 'default-profile' && folder.id === '-1'
 
   contextMenu.value = {
     show: true,
@@ -298,9 +298,9 @@ const handleProfileContextMenu = (event: MouseEvent, folder: Folder, profile: Pr
     options: {
       showNewProfile: false,
       showNewFolder: false,
-      showDuplicate: !isDefaultProfile, // Can't duplicate default profile
-      showRename: !isDefaultProfile,    // Can't rename default profile
-      showDelete: !isDefaultProfile,    // Can't delete default profile
+      showDuplicate: true,      // Can duplicate any profile including default
+      showRename: true,         // Can rename any profile including default
+      showDelete: !isDefaultProfile, // Only restriction: can't delete default profile
     },
     targetFolder: folder,
     targetProfile: profile,
