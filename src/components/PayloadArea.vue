@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="h-100">
     3
   </div>
 </template>
