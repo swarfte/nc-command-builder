@@ -67,7 +67,7 @@ export const useFolderStore = defineStore(
         throw new Error(`Folder with name ${folderName} does not exist.`);
       }
 
-      folderDict.value[folderName].profiles.push(structuredClone(profile));
+      folderDict.value[folderName].profiles.push({ ...profile });
       return true;
     };
 
@@ -86,7 +86,7 @@ export const useFolderStore = defineStore(
         );
       }
 
-      folderDict.value[folderName].profiles[index] = structuredClone(profile);
+      folderDict.value[folderName].profiles[index] = { ...profile };
       return true;
     };
 
@@ -142,7 +142,7 @@ export const useProfileStore = defineStore(
     };
 
     const loadProfile = (profile: Profile) => {
-      currentProfile.value = structuredClone(profile);
+      currentProfile.value = { ...profile };
     };
 
     const updateProfile = (patch: Partial<Profile>) => {
