@@ -20,6 +20,7 @@ export const useFolderStore = defineStore(
         folderName,
         profiles: [],
       };
+      return true;
     };
 
     const deleteFolder = (folderName: string) => {
@@ -27,6 +28,42 @@ export const useFolderStore = defineStore(
         throw new Error(`Folder with name ${folderName} does not exist.`);
       }
       delete folderDict.value[folderName];
+      return true;
+    };
+
+    const addProfileToFolder = (folderName: string, profile: Profile) => {
+      if (!folderDict.value[folderName]) {
+        throw new Error(`Folder with name ${folderName} does not exist.`);
+      }
+      folderDict.value[folderName].profiles.push(profile);
+      return true;
+    };
+
+    const deleteProfileFromFolder = (
+      folderName: string,
+      profileName: string,
+    ) => {
+      if (!folderDict.value[folderName]) {
+        throw new Error(`Folder with name ${folderName} does not exist.`);
+      }
+      const profileIndex = folderDict.value[folderName].profiles.findIndex(
+        (p) => p.profileName === profileName,
+      );
+      if (profileIndex === -1) {
+        throw new Error(
+          `Profile with name ${profileName} does not exist in folder ${folderName}.`,
+        );
+      }
+      folderDict.value[folderName].profiles.splice(profileIndex, 1);
+      return true;
+    };
+
+    return {
+      folderDict,
+      addFolder,
+      deleteFolder,
+      addProfileToFolder,
+      deleteProfileFromFolder,
     };
   },
   {
