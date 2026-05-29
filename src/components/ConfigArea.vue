@@ -12,7 +12,7 @@
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Host</label>
               <input
-                v-model="config.host"
+                v-model="localConfig.host"
                 class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 type="text" placeholder="localhost" />
             </div>
@@ -21,7 +21,7 @@
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Port</label>
               <input
-                v-model.number="config.port"
+                v-model.number="localConfig.port"
                 class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 type="number" placeholder="8080" />
             </div>
@@ -30,7 +30,7 @@
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Mode</label>
               <select
-                v-model="config.targetMode"
+                v-model="localConfig.targetMode"
                 class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
                 <option value="connect">Connect</option>
                 <option value="listen">Listen</option>
@@ -41,7 +41,7 @@
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Protocol</label>
               <select
-                v-model="config.protocol"
+                v-model="localConfig.protocol"
                 class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
                 <option value="TCP">TCP</option>
                 <option value="UDP">UDP</option>
@@ -52,7 +52,7 @@
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Netcat Flavor</label>
               <select
-                v-model="config.flavor"
+                v-model="localConfig.flavor"
                 class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
                 <option value="GNU netcat">GNU netcat</option>
                 <option value="OpenBSD netcat">OpenBSD netcat</option>
@@ -71,7 +71,7 @@
             <!-- Verbose -->
             <label class="flex items-center gap-2 p-2 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer">
               <input
-                v-model="config.isVerbose"
+                v-model="localConfig.isVerbose"
                 class="size-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 type="checkbox" />
               <div class="flex-1">
@@ -83,7 +83,7 @@
             <!-- No DNS -->
             <label class="flex items-center gap-2 p-2 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer">
               <input
-                v-model="config.isNoDNS"
+                v-model="localConfig.isNoDNS"
                 class="size-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 type="checkbox" />
               <div class="flex-1">
@@ -95,7 +95,7 @@
             <!-- Keep Listening -->
             <label class="flex items-center gap-2 p-2 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer">
               <input
-                v-model="config.isKeepListening"
+                v-model="localConfig.isKeepListening"
                 class="size-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 type="checkbox" />
               <div class="flex-1">
@@ -115,7 +115,7 @@
               <label class="block text-xs font-medium text-gray-600 mb-1">Timeout</label>
               <div class="relative">
                 <input
-                  v-model.number="config.timeout"
+                  v-model.number="localConfig.timeout"
                   class="w-full rounded border border-gray-300 px-2 py-1.5 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="number" placeholder="5" />
                 <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">-w</span>
@@ -127,7 +127,7 @@
               <label class="block text-xs font-medium text-gray-600 mb-1">Close Delay</label>
               <div class="relative">
                 <input
-                  v-model.number="config.closeDelay"
+                  v-model.number="localConfig.closeDelay"
                   class="w-full rounded border border-gray-300 px-2 py-1.5 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="number" placeholder="0" />
                 <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">-q</span>
@@ -139,7 +139,7 @@
               <label class="block text-xs font-medium text-gray-600 mb-1">Bind Script</label>
               <div class="relative">
                 <input
-                  v-model="config.bindCommand"
+                  v-model="localConfig.bindCommand"
                   class="w-full rounded border border-gray-300 px-2 py-1.5 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="shell command" />
                 <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">-s</span>
@@ -154,27 +154,21 @@
 
 <script lang="ts" setup>
 import { ref, watch, onMounted } from 'vue'
-import { useProfileStore } from '../stores'
-import type { Profile } from '../models'
+import { useProfileStore, useFolderStore } from '../stores'
 
 const profileStore = useProfileStore()
+const folderStore = useFolderStore()
 
-// Create a reactive config object
-const config = ref<Profile>({
-  id: '',
-  version: '1.0',
-  profileName: '',
+// Flag to prevent circular updates
+const isUpdatingFromStore = ref(false)
+
+// Local config state with only the fields we're editing
+const localConfig = ref({
   host: 'localhost',
   port: 8080,
   targetMode: 'connect',
   protocol: 'TCP',
   flavor: 'GNU netcat',
-  payloadMode: 'GET',
-  outputType: 'printf',
-  query: '',
-  body: '',
-  contentType: 'text/plain',
-  connection: 'close',
   isVerbose: true,
   isNoDNS: false,
   isKeepListening: true,
@@ -183,25 +177,66 @@ const config = ref<Profile>({
   bindCommand: '',
 })
 
-// Load current profile on mount
-onMounted(() => {
-  loadCurrentProfile()
-})
+// Load current profile into local config
+const loadCurrentProfile = () => {
+  isUpdatingFromStore.value = true
+  const profile = profileStore.currentProfile
+  localConfig.value = {
+    host: profile.host,
+    port: profile.port,
+    targetMode: profile.targetMode,
+    protocol: profile.protocol,
+    flavor: profile.flavor,
+    isVerbose: profile.isVerbose,
+    isNoDNS: profile.isNoDNS,
+    isKeepListening: profile.isKeepListening,
+    timeout: profile.timeout,
+    closeDelay: profile.closeDelay || 0,
+    bindCommand: profile.bindCommand || '',
+  }
+  // Reset flag after a small delay to prevent immediate trigger
+  setTimeout(() => {
+    isUpdatingFromStore.value = false
+  }, 50)
+}
 
-// Watch for profile changes from other components
+// Find the folder that contains the current profile
+const findFolderForProfile = (profileId: string) => {
+  return folderStore.folderList.find(folder =>
+    folder.profiles.some(profile => profile.id === profileId)
+  )
+}
+
+// Watch local config changes and update both stores
+watch(localConfig, (newConfig) => {
+  if (!isUpdatingFromStore.value) {
+    // Update current profile in profile store
+    profileStore.updateProfile(newConfig)
+
+    // Also update the profile in the folder store
+    const currentProfileId = profileStore.currentProfile.id
+    const folder = findFolderForProfile(currentProfileId)
+
+    if (folder) {
+      // Update the profile in the folder with the new config values
+      const updatedProfile = {
+        ...profileStore.currentProfile,
+        ...newConfig
+      }
+      folderStore.updateProfileInFolder(folder.id, updatedProfile)
+    }
+  }
+}, { deep: true })
+
+// Watch for profile changes from other components (like switching profiles)
 watch(() => profileStore.currentProfile, () => {
   loadCurrentProfile()
 }, { deep: true })
 
-// Load the current profile into config
-const loadCurrentProfile = () => {
-  config.value = { ...profileStore.currentProfile }
-}
-
-// Watch config changes and update profile store
-watch(config, (newConfig) => {
-  profileStore.updateProfile(newConfig)
-}, { deep: true })
+// Load current profile on mount
+onMounted(() => {
+  loadCurrentProfile()
+})
 </script>
 
 <style></style>
