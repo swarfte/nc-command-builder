@@ -109,6 +109,10 @@ export const useFolderStore = defineStore(
       return true;
     };
 
+    const folderList = computed(() => {
+      return Object.values(folderDict.value);
+    });
+
     return {
       folderDict,
       addFolder,
@@ -116,6 +120,7 @@ export const useFolderStore = defineStore(
       addProfileToFolder,
       updateProfileInFolder,
       deleteProfileFromFolder,
+      folderList,
     };
   },
   {

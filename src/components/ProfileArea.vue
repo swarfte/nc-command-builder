@@ -18,7 +18,12 @@
     </div>
 
     <!-- profile list -->
-    <div class="col-span-5 row-span-4 row-start-2">ABC</div>
+    <div class="col-span-5 row-span-4 row-start-2">
+      <div v-for="folder in folderList">
+        <p>{{ folder.folderName }}</p>
+      </div>
+
+    </div>
   </div>
 
 
@@ -26,8 +31,11 @@
 
 <script lang="ts" setup>
 import { FolderPlusIcon, DocumentPlusIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
-
-
+import { useProfileStore, useFolderStore } from '../stores'
+const profileStore = useProfileStore()
+const folderStore = useFolderStore()
+const folderList = folderStore.folderList
+console.log("folder list ", folderList)
 </script>
 
 <style></style>
