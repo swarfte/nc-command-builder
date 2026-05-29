@@ -30,9 +30,10 @@ function createDefaultProfile(): Profile {
 export const useFolderStore = defineStore(
   "folder",
   () => {
+    const generalFolderId = "-1";
     const folderDict = ref<Record<string, Folder>>({
-      [crypto.randomUUID()]: {
-        id: crypto.randomUUID(),
+      [generalFolderId]: {
+        id: generalFolderId,
         folderName: "General",
         profiles: [],
       },
@@ -41,7 +42,7 @@ export const useFolderStore = defineStore(
     const addFolder = (folderName: string) => {
       // Check if folder name already exists
       const existingFolder = Object.values(folderDict.value).find(
-        f => f.folderName === folderName
+        (f) => f.folderName === folderName,
       );
       if (existingFolder) {
         throw new Error(`Folder with name ${folderName} already exists.`);
@@ -82,7 +83,7 @@ export const useFolderStore = defineStore(
 
       // Check if new name already exists
       const existingFolder = Object.values(folderDict.value).find(
-        f => f.folderName === newName && f.id !== folderId
+        (f) => f.folderName === newName && f.id !== folderId,
       );
       if (existingFolder) {
         throw new Error(`Folder with name ${newName} already exists.`);
