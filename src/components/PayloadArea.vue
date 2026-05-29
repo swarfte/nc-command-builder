@@ -1,6 +1,6 @@
 <template>
   <div class="h-100">
-    3
+    Payload Area
   </div>
 </template>
 

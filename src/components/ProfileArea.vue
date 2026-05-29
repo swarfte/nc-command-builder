@@ -258,7 +258,7 @@ const handleSidebarContextMenu = (event: MouseEvent) => {
       showRename: false,
       showDelete: false,
     },
-    targetFolder: generalFolder,
+    targetFolder: generalFolder || undefined,
   }
 
   console.log('Context menu state:', contextMenu.value)
@@ -324,7 +324,7 @@ const handleNewProfile = () => {
       bindCommand: "",
     }
 
-    folderStore.addProfileToFolder(contextMenu.value.targetFolder.folderName, newProfile)
+    folderStore.addProfileToFolder(contextMenu.value.targetFolder.id, newProfile)
 
     // Expand the folder to show the new profile
     expandedFolders.value.add(contextMenu.value.targetFolder.id)
@@ -380,7 +380,7 @@ const handleDuplicate = () => {
     }
 
     if (contextMenu.value.targetFolder) {
-      folderStore.addProfileToFolder(contextMenu.value.targetFolder.folderName, newProfile)
+      folderStore.addProfileToFolder(contextMenu.value.targetFolder.id, newProfile)
       expandedFolders.value.add(contextMenu.value.targetFolder.id)
       expandedFolders.value = new Set(expandedFolders.value)
     }
@@ -391,7 +391,7 @@ const handleDuplicate = () => {
 
     try {
       // Create new folder
-      folderStore.addFolder(newFolderName)
+      const newFolder = folderStore.addFolder(newFolderName)
 
       // Copy all profiles to the new folder
       folder.profiles.forEach(profile => {
@@ -399,8 +399,12 @@ const handleDuplicate = () => {
           ...profile,
           id: crypto.randomUUID(),
         }
-        folderStore.addProfileToFolder(newFolderName, newProfile)
+        folderStore.addProfileToFolder(newFolder.id, newProfile)
       })
+
+      // Expand the new folder
+      expandedFolders.value.add(newFolder.id)
+      expandedFolders.value = new Set(expandedFolders.value)
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Failed to duplicate folder')
     }
@@ -435,7 +439,7 @@ const confirmRenameProfile = () => {
       profileName: renameProfileName.value.trim(),
     }
 
-    folderStore.updateProfileInFolder(contextMenu.value.targetFolder.folderName, updatedProfile)
+    folderStore.updateProfileInFolder(contextMenu.value.targetFolder.id, updatedProfile)
 
     // If this is the current profile, update it too
     if (profileStore.currentProfile.id === contextMenu.value.targetProfile.id) {
@@ -455,9 +459,17 @@ const cancelRenameProfile = () => {
 }
 
 const confirmRenameFolder = () => {
-  alert('Rename folder functionality requires updating the store. Current store uses folder name as key.')
-  showRenameFolderDialog.value = false
-  renameFolderName.value = ''
+  if (renameFolderName.value.trim() && contextMenu.value.targetFolder) {
+    try {
+      folderStore.renameFolder(contextMenu.value.targetFolder.id, renameFolderName.value.trim())
+      showRenameFolderDialog.value = false
+      renameFolderName.value = ''
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to rename folder')
+    }
+  } else {
+    alert('Please enter a folder name')
+  }
 }
 
 const cancelRenameFolder = () => {
@@ -471,7 +483,7 @@ const handleDelete = () => {
     // Delete profile
     if (confirm(`Are you sure you want to delete "${contextMenu.value.targetProfile.profileName}"?`)) {
       try {
-        folderStore.deleteProfileFromFolder(contextMenu.value.targetFolder.folderName, contextMenu.value.targetProfile.id)
+        folderStore.deleteProfileFromFolder(contextMenu.value.targetFolder.id, contextMenu.value.targetProfile.id)
 
         // If deleted profile was current, reset to default
         if (profileStore.currentProfile.id === contextMenu.value.targetProfile.id) {
@@ -485,7 +497,7 @@ const handleDelete = () => {
     // Delete folder
     if (confirm(`Are you sure you want to delete "${contextMenu.value.targetFolder.folderName}" and all its profiles?`)) {
       try {
-        folderStore.deleteFolder(contextMenu.value.targetFolder.folderName)
+        folderStore.deleteFolder(contextMenu.value.targetFolder.id)
       } catch (error) {
         alert(error instanceof Error ? error.message : 'Failed to delete folder')
       }

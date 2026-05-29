@@ -31,7 +31,7 @@ export const useFolderStore = defineStore(
   "folder",
   () => {
     const folderDict = ref<Record<string, Folder>>({
-      General: {
+      [crypto.randomUUID()]: {
         id: crypto.randomUUID(),
         folderName: "General",
         profiles: [],
@@ -39,74 +39,108 @@ export const useFolderStore = defineStore(
     });
 
     const addFolder = (folderName: string) => {
-      if (folderDict.value[folderName]) {
+      // Check if folder name already exists
+      const existingFolder = Object.values(folderDict.value).find(
+        f => f.folderName === folderName
+      );
+      if (existingFolder) {
         throw new Error(`Folder with name ${folderName} already exists.`);
       }
-      folderDict.value[folderName] = {
+
+      const newFolder: Folder = {
         id: crypto.randomUUID(),
         folderName,
         profiles: [],
       };
-      return true;
+      folderDict.value[newFolder.id] = newFolder;
+      return newFolder;
     };
 
-    const deleteFolder = (folderName: string) => {
-      if (folderName === "General") {
+    const deleteFolder = (folderId: string) => {
+      const folder = folderDict.value[folderId];
+      if (!folder) {
+        throw new Error(`Folder with id ${folderId} does not exist.`);
+      }
+
+      if (folder.folderName === "General") {
         throw new Error("General folder cannot be deleted.");
       }
 
-      if (!folderDict.value[folderName]) {
-        throw new Error(`Folder with name ${folderName} does not exist.`);
-      }
-      delete folderDict.value[folderName];
+      delete folderDict.value[folderId];
       return true;
     };
 
-    const addProfileToFolder = (folderName: string, profile: Profile) => {
-      if (!folderDict.value[folderName]) {
-        throw new Error(`Folder with name ${folderName} does not exist.`);
+    const renameFolder = (folderId: string, newName: string) => {
+      const folder = folderDict.value[folderId];
+      if (!folder) {
+        throw new Error(`Folder with id ${folderId} does not exist.`);
       }
 
-      folderDict.value[folderName].profiles.push({ ...profile });
+      if (folder.folderName === "General") {
+        throw new Error("General folder cannot be renamed.");
+      }
+
+      // Check if new name already exists
+      const existingFolder = Object.values(folderDict.value).find(
+        f => f.folderName === newName && f.id !== folderId
+      );
+      if (existingFolder) {
+        throw new Error(`Folder with name ${newName} already exists.`);
+      }
+
+      folder.folderName = newName;
       return true;
     };
 
-    const updateProfileInFolder = (folderName: string, profile: Profile) => {
-      if (!folderDict.value[folderName]) {
-        throw new Error(`Folder with name ${folderName} does not exist.`);
+    const addProfileToFolder = (folderId: string, profile: Profile) => {
+      if (!folderDict.value[folderId]) {
+        throw new Error(`Folder with id ${folderId} does not exist.`);
       }
 
-      const index = folderDict.value[folderName].profiles.findIndex(
+      folderDict.value[folderId].profiles.push({ ...profile });
+      return true;
+    };
+
+    const updateProfileInFolder = (folderId: string, profile: Profile) => {
+      if (!folderDict.value[folderId]) {
+        throw new Error(`Folder with id ${folderId} does not exist.`);
+      }
+
+      const index = folderDict.value[folderId].profiles.findIndex(
         (p) => p.id === profile.id,
       );
 
       if (index === -1) {
         throw new Error(
-          `Profile with id ${profile.id} does not exist in folder ${folderName}.`,
+          `Profile with id ${profile.id} does not exist in folder ${folderId}.`,
         );
       }
 
-      folderDict.value[folderName].profiles[index] = { ...profile };
+      folderDict.value[folderId].profiles[index] = { ...profile };
       return true;
     };
 
-    const deleteProfileFromFolder = (folderName: string, profileId: string) => {
-      if (!folderDict.value[folderName]) {
-        throw new Error(`Folder with name ${folderName} does not exist.`);
+    const deleteProfileFromFolder = (folderId: string, profileId: string) => {
+      if (!folderDict.value[folderId]) {
+        throw new Error(`Folder with id ${folderId} does not exist.`);
       }
 
-      const profileIndex = folderDict.value[folderName].profiles.findIndex(
+      const profileIndex = folderDict.value[folderId].profiles.findIndex(
         (p) => p.id === profileId,
       );
 
       if (profileIndex === -1) {
         throw new Error(
-          `Profile with id ${profileId} does not exist in folder ${folderName}.`,
+          `Profile with id ${profileId} does not exist in folder ${folderId}.`,
         );
       }
 
-      folderDict.value[folderName].profiles.splice(profileIndex, 1);
+      folderDict.value[folderId].profiles.splice(profileIndex, 1);
       return true;
+    };
+
+    const getFolderById = (folderId: string): Folder | undefined => {
+      return folderDict.value[folderId];
     };
 
     const folderList = computed(() => {
@@ -117,15 +151,17 @@ export const useFolderStore = defineStore(
       folderDict,
       addFolder,
       deleteFolder,
+      renameFolder,
       addProfileToFolder,
       updateProfileInFolder,
       deleteProfileFromFolder,
+      getFolderById,
       folderList,
     };
   },
   {
     persist: {
-      key: "nc-folder-store-v1",
+      key: "nc-folder-store-v2",
       storage: localStorage,
     },
   },
