@@ -9,11 +9,9 @@
             class="w-full rounded-md border border-gray-300 py-2 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             type="search" name="q" placeholder="Search profiles..." aria-label="Search through profiles" />
         </div>
-        <button
-          class="px-3 py-2 text-sm bg-red-500 text-white hover:bg-red-600 rounded-md flex items-center gap-2"
+        <button class="px-3 py-2 text-sm bg-red-500 text-white hover:bg-red-600 rounded-md flex items-center gap-2"
           @click="showResetConfirmDialog = true">
-          <ArrowPathIcon class="size-4" />
-          <span>Reset</span>
+          <ArrowPathIcon class="size-5" />
         </button>
       </div>
     </div>
