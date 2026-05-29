@@ -2,12 +2,19 @@
   <div class="h-full flex flex-col bg-gray-50">
     <!-- toolbar -->
     <div class="p-3 border-b border-gray-200">
-      <div class="relative">
-        <MagnifyingGlassIcon class="size-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          class="w-full rounded-md border border-gray-300 py-2 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          type="search" name="q" placeholder="Search profiles..." aria-label="Search through profiles" />
-
+      <div class="relative flex items-center gap-2">
+        <div class="relative flex-1">
+          <MagnifyingGlassIcon class="size-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            class="w-full rounded-md border border-gray-300 py-2 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            type="search" name="q" placeholder="Search profiles..." aria-label="Search through profiles" />
+        </div>
+        <button
+          class="px-3 py-2 text-sm bg-red-500 text-white hover:bg-red-600 rounded-md flex items-center gap-2"
+          @click="showResetConfirmDialog = true">
+          <ArrowPathIcon class="size-4" />
+          <span>Reset</span>
+        </button>
       </div>
     </div>
 
@@ -150,6 +157,26 @@
         </div>
       </div>
     </div>
+
+    <!-- reset confirmation dialog -->
+    <div v-if="showResetConfirmDialog"
+      class="fixed inset-0 z-[10000] flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white rounded-lg shadow-xl p-6 w-96">
+        <h3 class="text-lg font-semibold mb-4">Reset All Data</h3>
+        <p class="text-sm text-gray-600 mb-6">
+          Are you sure you want to reset all data? This will delete all folders and profiles except the General folder
+          and default profile. This action cannot be undone.
+        </p>
+        <div class="flex justify-end gap-2">
+          <button class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md" @click="cancelReset">
+            Cancel
+          </button>
+          <button class="px-4 py-2 text-sm bg-red-500 text-white hover:bg-red-600 rounded-md" @click="confirmReset">
+            Reset All
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -165,7 +192,8 @@ import {
   DocumentDuplicateIcon,
   PencilIcon,
   TrashIcon,
-  ClipboardDocumentIcon
+  ClipboardDocumentIcon,
+  ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 import { useProfileStore, useFolderStore } from '../stores'
 import type { Profile, Folder } from '../models'
@@ -224,6 +252,9 @@ const renameProfileName = ref('')
 const renameFolderName = ref('')
 const renameProfileInput = ref<HTMLInputElement | null>(null)
 const renameFolderInput = ref<HTMLInputElement | null>(null)
+
+// Reset confirmation dialog state
+const showResetConfirmDialog = ref(false)
 
 // Toggle folder expansion
 const toggleFolder = (folderId: string) => {
@@ -528,6 +559,59 @@ const handleDelete = () => {
   }
 
   closeContextMenu()
+}
+
+// Handle reset
+const confirmReset = () => {
+  // Reset folder store to initial state
+  folderStore.folderDict = {
+    '-1': {
+      id: '-1',
+      folderName: 'General',
+      profiles: [
+        {
+          id: 'default-profile',
+          version: '1.0',
+          profileName: 'default',
+          host: 'localhost',
+          port: 8080,
+          targetMode: 'connect',
+          protocol: 'TCP',
+          flavor: 'GNU netcat',
+          payloadMode: 'GET',
+          outputType: 'printf',
+          query: '',
+          body: '',
+          contentType: 'text/plain',
+          connection: 'close',
+          isVerbose: true,
+          isNoDNS: false,
+          isKeepListening: true,
+          timeout: 5,
+          closeDelay: 0,
+          bindCommand: '',
+        },
+      ],
+    },
+  }
+
+  // Reset current profile to default
+  const generalFolder = folderStore.getFolderById('-1')
+  if (generalFolder && generalFolder.profiles.length > 0) {
+    const defaultProfile = generalFolder.profiles.find(p => p.id === 'default-profile')
+    if (defaultProfile) {
+      profileStore.loadProfile(defaultProfile)
+    }
+  }
+
+  // Reset expanded folders to only show General
+  expandedFolders.value = new Set(['-1'])
+
+  showResetConfirmDialog.value = false
+}
+
+const cancelReset = () => {
+  showResetConfirmDialog.value = false
 }
 
 // Initialize default profile on component mount
