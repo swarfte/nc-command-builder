@@ -67,6 +67,28 @@
         <FolderPlusIcon class="size-4" />
         <span>New Folder</span>
       </button>
+
+      <div v-if="contextMenu.options.showDuplicate || contextMenu.options.showRename || contextMenu.options.showDelete"
+        class="border-t border-gray-200 my-1"></div>
+
+      <button v-if="contextMenu.options.showDuplicate"
+        class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2" @click="handleDuplicate">
+        <DocumentDuplicateIcon v-if="contextMenu.targetProfile" class="size-4" />
+        <FolderIcon v-else class="size-4" />
+        <span>Duplicate</span>
+      </button>
+
+      <button v-if="contextMenu.options.showRename"
+        class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2" @click="handleRename">
+        <PencilIcon class="size-4" />
+        <span>Rename</span>
+      </button>
+
+      <button v-if="contextMenu.options.showDelete"
+        class="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2" @click="handleDelete">
+        <TrashIcon class="size-4" />
+        <span>Delete</span>
+      </button>
     </div>
 
     <!-- new folder dialog -->
@@ -87,6 +109,44 @@
         </div>
       </div>
     </div>
+
+    <!-- rename profile dialog -->
+    <div v-if="showRenameProfileDialog" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white rounded-lg shadow-xl p-6 w-96">
+        <h3 class="text-lg font-semibold mb-4">Rename Profile</h3>
+        <input ref="renameProfileInput" v-model="renameProfileName"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          type="text" placeholder="Enter profile name" @keyup.enter="confirmRenameProfile" @keyup.esc="cancelRenameProfile" />
+        <div class="flex justify-end gap-2">
+          <button class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md" @click="cancelRenameProfile">
+            Cancel
+          </button>
+          <button class="px-4 py-2 text-sm bg-blue-500 text-white hover:bg-blue-600 rounded-md"
+            @click="confirmRenameProfile">
+            Rename
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- rename folder dialog -->
+    <div v-if="showRenameFolderDialog" class="fixed inset-0 z-[10000] flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white rounded-lg shadow-xl p-6 w-96">
+        <h3 class="text-lg font-semibold mb-4">Rename Folder</h3>
+        <input ref="renameFolderInput" v-model="renameFolderName"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          type="text" placeholder="Enter folder name" @keyup.enter="confirmRenameFolder" @keyup.esc="cancelRenameFolder" />
+        <div class="flex justify-end gap-2">
+          <button class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md" @click="cancelRenameFolder">
+            Cancel
+          </button>
+          <button class="px-4 py-2 text-sm bg-blue-500 text-white hover:bg-blue-600 rounded-md"
+            @click="confirmRenameFolder">
+            Rename
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -98,7 +158,11 @@ import {
   MagnifyingGlassIcon,
   FolderIcon,
   DocumentIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  DocumentDuplicateIcon,
+  PencilIcon,
+  TrashIcon,
+  ClipboardDocumentIcon
 } from '@heroicons/vue/24/outline'
 import { useProfileStore, useFolderStore } from '../stores'
 import type { Profile, Folder } from '../models'
@@ -116,6 +180,9 @@ const expandedFolders = ref<Set<string>>(new Set(['General']))
 interface ContextMenuOptions {
   showNewProfile: boolean
   showNewFolder: boolean
+  showDuplicate: boolean
+  showRename: boolean
+  showDelete: boolean
 }
 
 interface ContextMenuState {
@@ -124,6 +191,7 @@ interface ContextMenuState {
   y: number
   options: ContextMenuOptions
   targetFolder?: Folder
+  targetProfile?: Profile
 }
 
 const contextMenu = ref<ContextMenuState>({
@@ -133,14 +201,26 @@ const contextMenu = ref<ContextMenuState>({
   options: {
     showNewProfile: false,
     showNewFolder: false,
+    showDuplicate: false,
+    showRename: false,
+    showDelete: false,
   },
   targetFolder: undefined,
+  targetProfile: undefined,
 })
 
 // New folder dialog state
 const showNewFolderDialog = ref(false)
 const newFolderName = ref('')
 const folderNameInput = ref<HTMLInputElement | null>(null)
+
+// Rename dialogs state
+const showRenameProfileDialog = ref(false)
+const showRenameFolderDialog = ref(false)
+const renameProfileName = ref('')
+const renameFolderName = ref('')
+const renameProfileInput = ref<HTMLInputElement | null>(null)
+const renameFolderInput = ref<HTMLInputElement | null>(null)
 
 // Toggle folder expansion
 const toggleFolder = (folderId: string) => {
@@ -174,6 +254,9 @@ const handleSidebarContextMenu = (event: MouseEvent) => {
     options: {
       showNewProfile: !!generalFolder,
       showNewFolder: true,
+      showDuplicate: false,
+      showRename: false,
+      showDelete: false,
     },
     targetFolder: generalFolder,
   }
@@ -190,8 +273,12 @@ const handleFolderContextMenu = (event: MouseEvent, folder: Folder) => {
     options: {
       showNewProfile: true,
       showNewFolder: false,
+      showDuplicate: true,
+      showRename: true,
+      showDelete: folder.folderName !== 'General', // Can't delete General folder
     },
     targetFolder: folder,
+    targetProfile: undefined,
   }
 }
 
@@ -202,10 +289,14 @@ const handleProfileContextMenu = (event: MouseEvent, folder: Folder, profile: Pr
     x: event.clientX,
     y: event.clientY,
     options: {
-      showNewProfile: true,
+      showNewProfile: false,
       showNewFolder: false,
+      showDuplicate: true,
+      showRename: true,
+      showDelete: true,
     },
     targetFolder: folder,
+    targetProfile: profile,
   }
 }
 
@@ -275,5 +366,132 @@ const confirmNewFolder = () => {
 const cancelNewFolder = () => {
   showNewFolderDialog.value = false
   newFolderName.value = ''
+}
+
+// Handle duplicate
+const handleDuplicate = () => {
+  if (contextMenu.value.targetProfile) {
+    // Duplicate profile
+    const profile = contextMenu.value.targetProfile
+    const newProfile: Profile = {
+      ...profile,
+      id: crypto.randomUUID(),
+      profileName: `${profile.profileName} (copy)`,
+    }
+
+    if (contextMenu.value.targetFolder) {
+      folderStore.addProfileToFolder(contextMenu.value.targetFolder.folderName, newProfile)
+      expandedFolders.value.add(contextMenu.value.targetFolder.id)
+      expandedFolders.value = new Set(expandedFolders.value)
+    }
+  } else if (contextMenu.value.targetFolder) {
+    // Duplicate folder
+    const folder = contextMenu.value.targetFolder
+    const newFolderName = `${folder.folderName} (copy)`
+
+    try {
+      // Create new folder
+      folderStore.addFolder(newFolderName)
+
+      // Copy all profiles to the new folder
+      folder.profiles.forEach(profile => {
+        const newProfile: Profile = {
+          ...profile,
+          id: crypto.randomUUID(),
+        }
+        folderStore.addProfileToFolder(newFolderName, newProfile)
+      })
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to duplicate folder')
+    }
+  }
+
+  closeContextMenu()
+}
+
+// Handle rename
+const handleRename = () => {
+  closeContextMenu()
+
+  if (contextMenu.value.targetProfile) {
+    showRenameProfileDialog.value = true
+    renameProfileName.value = contextMenu.value.targetProfile.profileName
+    setTimeout(() => {
+      renameProfileInput.value?.focus()
+    }, 100)
+  } else if (contextMenu.value.targetFolder) {
+    showRenameFolderDialog.value = true
+    renameFolderName.value = contextMenu.value.targetFolder.folderName
+    setTimeout(() => {
+      renameFolderInput.value?.focus()
+    }, 100)
+  }
+}
+
+const confirmRenameProfile = () => {
+  if (renameProfileName.value.trim() && contextMenu.value.targetFolder && contextMenu.value.targetProfile) {
+    const updatedProfile: Profile = {
+      ...contextMenu.value.targetProfile,
+      profileName: renameProfileName.value.trim(),
+    }
+
+    folderStore.updateProfileInFolder(contextMenu.value.targetFolder.folderName, updatedProfile)
+
+    // If this is the current profile, update it too
+    if (profileStore.currentProfile.id === contextMenu.value.targetProfile.id) {
+      profileStore.loadProfile(updatedProfile)
+    }
+
+    showRenameProfileDialog.value = false
+    renameProfileName.value = ''
+  } else {
+    alert('Please enter a profile name')
+  }
+}
+
+const cancelRenameProfile = () => {
+  showRenameProfileDialog.value = false
+  renameProfileName.value = ''
+}
+
+const confirmRenameFolder = () => {
+  alert('Rename folder functionality requires updating the store. Current store uses folder name as key.')
+  showRenameFolderDialog.value = false
+  renameFolderName.value = ''
+}
+
+const cancelRenameFolder = () => {
+  showRenameFolderDialog.value = false
+  renameFolderName.value = ''
+}
+
+// Handle delete
+const handleDelete = () => {
+  if (contextMenu.value.targetProfile && contextMenu.value.targetFolder) {
+    // Delete profile
+    if (confirm(`Are you sure you want to delete "${contextMenu.value.targetProfile.profileName}"?`)) {
+      try {
+        folderStore.deleteProfileFromFolder(contextMenu.value.targetFolder.folderName, contextMenu.value.targetProfile.id)
+
+        // If deleted profile was current, reset to default
+        if (profileStore.currentProfile.id === contextMenu.value.targetProfile.id) {
+          profileStore.resetProfile()
+        }
+      } catch (error) {
+        alert(error instanceof Error ? error.message : 'Failed to delete profile')
+      }
+    }
+  } else if (contextMenu.value.targetFolder) {
+    // Delete folder
+    if (confirm(`Are you sure you want to delete "${contextMenu.value.targetFolder.folderName}" and all its profiles?`)) {
+      try {
+        folderStore.deleteFolder(contextMenu.value.targetFolder.folderName)
+      } catch (error) {
+        alert(error instanceof Error ? error.message : 'Failed to delete folder')
+      }
+    }
+  }
+
+  closeContextMenu()
 }
 </script>
