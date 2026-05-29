@@ -1,13 +1,13 @@
 <template>
   <div class="h-full flex flex-col bg-white">
     <div class="flex-1 overflow-y-auto p-4">
-      <div class="max-w-2xl">
+      <div class="w-full">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">Configuration</h2>
 
         <!-- Basic Configuration -->
         <div class="mb-4">
           <h3 class="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Basic</h3>
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-5 gap-2">
             <!-- Host -->
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Host</label>
@@ -49,7 +49,7 @@
             </div>
 
             <!-- NC Flavor -->
-            <div class="col-span-2">
+            <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Netcat Flavor</label>
               <select
                 v-model="config.flavor"
@@ -67,7 +67,7 @@
         <!-- Network Options -->
         <div class="mb-4">
           <h3 class="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Network</h3>
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-3 gap-2">
             <!-- Verbose -->
             <label class="flex items-center gap-2 p-2 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer">
               <input
@@ -124,7 +124,7 @@
 
             <!-- Close Delay -->
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Delay</label>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Close Delay</label>
               <div class="relative">
                 <input
                   v-model.number="config.closeDelay"
@@ -134,14 +134,14 @@
               </div>
             </div>
 
-            <!-- Bind Address -->
+            <!-- Bind Script -->
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Bind</label>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Bind Script</label>
               <div class="relative">
                 <input
                   v-model="config.bindCommand"
                   class="w-full rounded border border-gray-300 px-2 py-1.5 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  type="text" placeholder="0.0.0.0" />
+                  type="text" placeholder="shell command" />
                 <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">-s</span>
               </div>
             </div>
