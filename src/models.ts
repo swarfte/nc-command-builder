@@ -11,6 +11,7 @@ export interface Profile {
   outputType: string;
   query?: string;
   body?: string;
+  rawPayload?: string;
   contentType: string;
   connection: string;
   isVerbose: boolean;
