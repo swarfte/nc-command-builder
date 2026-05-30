@@ -8,17 +8,17 @@ import ConfigArea from "./components/ConfigArea.vue";
 
 <template>
 
-  <div class="grid grid-cols-12 grid-rows-9 gap-2">
-    <div class="col-span-2 row-span-9">
+  <div class="grid grid-cols-12 gap-2 items-start min-h-screen">
+    <div class="col-span-2 row-span-3">
       <ProfileArea />
     </div>
-    <div class="col-span-10 row-span-2 col-start-3">
+    <div class="col-span-10">
       <ConfigArea />
     </div>
-    <div class="col-span-10 row-span-4 col-start-3 row-start-3">
+    <div class="col-span-10">
       <PayloadArea />
     </div>
-    <div class="col-span-10 row-span-3 col-start-3 row-start-7">
+    <div class="col-span-10">
       <PreviewArea />
     </div>
   </div>
