@@ -221,6 +221,19 @@ const getPayloadForCommand = () => {
   return ''
 }
 
+const encodeFormLike = (input: string) => {
+  const params = new URLSearchParams()
+
+  input.split('&').forEach(part => {
+    if (!part) return
+    const [rawKey, ...rawValueParts] = part.split('=')
+    const rawValue = rawValueParts.join('=')
+    params.append(rawKey ?? '', rawValue ?? '')
+  })
+
+  return params.toString()
+}
+
 // Generate GET request
 const generateGETRequest = () => {
   const cfg = config.value
@@ -231,7 +244,7 @@ const generateGETRequest = () => {
   let fullPath = path
   if (queryParams) {
     const encodedParams = encodingMode.value === 'url-encoded'
-      ? encodeURIComponent(queryParams)
+      ? encodeFormLike(queryParams)
       : queryParams
     fullPath += path.includes('?') ? `&${encodedParams}` : `?${encodedParams}`
   }
@@ -258,7 +271,7 @@ const generatePOSTRequest = () => {
   // Handle body with URL encoding if needed for form data
   let bodyContent = cfg.body || ''
   if (bodyContent && encodingMode.value === 'url-encoded' && cfg.contentType.includes('form-urlencoded')) {
-    bodyContent = encodeURIComponent(bodyContent)
+    bodyContent = encodeFormLike(bodyContent)
   }
 
   request += `Content-Length: ${bodyContent.length}\r\n`
