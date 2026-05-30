@@ -23,80 +23,15 @@
         </div>
 
         <!-- Generated Command -->
-        <div class="space-y-4">
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-2">Netcat Command</label>
-            <div class="relative">
-              <pre class="w-full bg-gray-900 text-green-400 p-4 rounded-lg text-sm font-mono overflow-x-auto whitespace-pre-wrap">{{ generatedCommand }}</pre>
-              <button
-                @click="copyCommand"
-                class="absolute top-2 right-2 px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded">
-                {{ copyButtonText }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Command Breakdown -->
-          <div class="mt-6">
-            <label class="block text-xs font-medium text-gray-600 mb-2">Command Breakdown</label>
-            <div class="bg-gray-50 rounded-lg p-3 space-y-2">
-              <div class="grid grid-cols-2 gap-2 text-xs">
-                <div class="text-gray-600">Mode:</div>
-                <div class="font-medium text-gray-800">{{ config.targetMode }}</div>
-
-                <div class="text-gray-600">Protocol:</div>
-                <div class="font-medium text-gray-800">{{ config.protocol }}</div>
-
-                <div class="text-gray-600">Flavor:</div>
-                <div class="font-medium text-gray-800">{{ config.flavor }}</div>
-
-                <div class="text-gray-600">Host:</div>
-                <div class="font-medium text-gray-800">{{ config.host }}</div>
-
-                <div class="text-gray-600">Port:</div>
-                <div class="font-medium text-gray-800">{{ config.port }}</div>
-
-                <div class="text-gray-600">Payload Mode:</div>
-                <div class="font-medium text-gray-800">{{ config.payloadMode }}</div>
-
-                <div class="text-gray-600">Verbose:</div>
-                <div class="font-medium text-gray-800">{{ config.isVerbose ? 'Yes (-v)' : 'No' }}</div>
-
-                <div class="text-gray-600">No DNS:</div>
-                <div class="font-medium text-gray-800">{{ config.isNoDNS ? 'Yes (-n)' : 'No' }}</div>
-
-                <div class="text-gray-600">Keep Listening:</div>
-                <div class="font-medium text-gray-800">{{ config.isKeepListening ? 'Yes (-k)' : 'No' }}</div>
-
-                <div v-if="config.timeout" class="text-gray-600">Timeout:</div>
-                <div v-if="config.timeout" class="font-medium text-gray-800">{{ config.timeout }}s (-w)</div>
-
-                <div v-if="config.closeDelay" class="text-gray-600">Close Delay:</div>
-                <div v-if="config.closeDelay" class="font-medium text-gray-800">{{ config.closeDelay }}s (-q)</div>
-
-                <div v-if="config.bindCommand" class="text-gray-600">Bind Script:</div>
-                <div v-if="config.bindCommand" class="font-medium text-gray-800">{{ config.bindCommand }} (-s)</div>
-
-                <div class="text-gray-600">Encoding:</div>
-                <div class="font-medium text-gray-800">{{ encodingMode }}</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Payload Preview -->
-          <div v-if="config.payloadMode !== 'Raw'" class="mt-4">
-            <label class="block text-xs font-medium text-gray-600 mb-2">{{ config.payloadMode }} Request Preview</label>
-            <div class="bg-gray-50 rounded-lg p-3">
-              <pre class="text-xs font-mono text-gray-700 whitespace-pre-wrap">{{ generatedRequest }}</pre>
-            </div>
-          </div>
-
-          <!-- Raw Payload Preview -->
-          <div v-if="config.payloadMode === 'Raw' && config.rawPayload" class="mt-4">
-            <label class="block text-xs font-medium text-gray-600 mb-2">Raw Payload</label>
-            <div class="bg-gray-50 rounded-lg p-3">
-              <pre class="text-xs font-mono text-gray-700 whitespace-pre-wrap">{{ displayRawPayload }}</pre>
-            </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-2">Netcat Command</label>
+          <div class="relative">
+            <pre class="w-full bg-gray-900 text-green-400 p-4 rounded-lg text-sm font-mono overflow-x-auto whitespace-pre-wrap">{{ generatedCommand }}</pre>
+            <button
+              @click="copyCommand"
+              class="absolute top-2 right-2 px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded">
+              {{ copyButtonText }}
+            </button>
           </div>
         </div>
       </div>
@@ -105,7 +40,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useProfileStore } from '../stores'
 
 const profileStore = useProfileStore()
@@ -124,26 +59,7 @@ const config = computed(() => profileStore.currentProfile)
 
 // Generate the netcat command
 const generatedCommand = computed(() => {
-  const cmd = generateNetcatCommand()
-  return cmd
-})
-
-// Generate the HTTP request for GET/POST modes
-const generatedRequest = computed(() => {
-  if (config.value.payloadMode === 'GET') {
-    return generateGETRequest()
-  } else if (config.value.payloadMode === 'POST') {
-    return generatePOSTRequest()
-  }
-  return ''
-})
-
-// Display raw payload (with URL encoding if enabled)
-const displayRawPayload = computed(() => {
-  if (encodingMode.value === 'url-encoded') {
-    return encodeURIComponent(config.value.rawPayload || '')
-  }
-  return config.value.rawPayload || ''
+  return generateNetcatCommand()
 })
 
 // Generate netcat command based on configuration
@@ -320,7 +236,6 @@ const getPayloadForCommand = () => {
 // Generate GET request
 const generateGETRequest = () => {
   const cfg = config.value
-  const protocol = cfg.targetMode === 'connect' ? 'http' : 'https'
   const queryParams = cfg.query || ''
 
   let request = `GET /?${queryParams} HTTP/1.1\r\n`
@@ -365,16 +280,6 @@ const copyCommand = async () => {
     }, 2000)
   }
 }
-
-// Watch for profile changes
-watch(() => profileStore.currentProfile, () => {
-  // Component will automatically update due to computed properties
-}, { deep: true })
-
-// Initialize on mount
-onMounted(() => {
-  // Component will automatically load current profile due to computed properties
-})
 </script>
 
 <style></style>
