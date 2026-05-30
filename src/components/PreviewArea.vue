@@ -126,19 +126,11 @@ const generateNetcatCommand = () => {
   if (cfg.payloadMode !== 'Raw') {
     const payload = getPayloadForCommand()
     if (payload) {
-      if (encodingMode.value === 'url-encoded') {
-        parts.push(`<<< "${encodeURIComponent(payload)}"`)
-      } else {
-        parts.push(`<<< "${payload}"`)
-      }
+      parts.push(`<<< "${payload}"`)
     }
   } else if (cfg.rawPayload) {
     // For raw mode, include the raw payload
-    if (encodingMode.value === 'url-encoded') {
-      parts.push(`<<< "${encodeURIComponent(cfg.rawPayload)}"`)
-    } else {
-      parts.push(`<<< "${cfg.rawPayload}"`)
-    }
+    parts.push(`<<< "${cfg.rawPayload}"`)
   }
 
   return parts.join(' ')
@@ -235,10 +227,13 @@ const generateGETRequest = () => {
   const queryParams = cfg.query || ''
   const path = cfg.path || '/'
 
-  // Handle query parameters
+  // Handle query parameters with URL encoding if needed
   let fullPath = path
   if (queryParams) {
-    fullPath += path.includes('?') ? `&${queryParams}` : `?${queryParams}`
+    const encodedParams = encodingMode.value === 'url-encoded'
+      ? encodeURIComponent(queryParams)
+      : queryParams
+    fullPath += path.includes('?') ? `&${encodedParams}` : `?${encodedParams}`
   }
 
   let request = `GET ${fullPath} HTTP/1.1\r\n`
@@ -259,11 +254,18 @@ const generatePOSTRequest = () => {
   request += `Host: ${cfg.host}\r\n`
   request += `User-Agent: netcat-command-builder\r\n`
   request += `Content-Type: ${cfg.contentType}\r\n`
-  request += `Content-Length: ${cfg.body ? cfg.body.length : 0}\r\n`
+
+  // Handle body with URL encoding if needed for form data
+  let bodyContent = cfg.body || ''
+  if (bodyContent && encodingMode.value === 'url-encoded' && cfg.contentType.includes('form-urlencoded')) {
+    bodyContent = encodeURIComponent(bodyContent)
+  }
+
+  request += `Content-Length: ${bodyContent.length}\r\n`
   request += `Connection: ${cfg.connection}\r\n\r\n`
 
-  if (cfg.body) {
-    request += cfg.body
+  if (bodyContent) {
+    request += bodyContent
   }
 
   return request
