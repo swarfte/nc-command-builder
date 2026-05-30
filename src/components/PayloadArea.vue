@@ -5,7 +5,7 @@
 
 
         <!-- Payload Mode Selector -->
-        <div class="mb-4">
+        <div class="mb-2">
           <div class="flex gap-2">
             <button v-for="mode in payloadModes" :key="mode.value" @click="switchPayloadMode(mode.value)" :class="[
               'px-4 py-2 text-sm rounded-md transition-colors',
@@ -58,7 +58,7 @@
         <!-- POST Mode -->
         <div v-if="localConfig.payloadMode === 'POST'" class="space-y-4">
           <!-- Content Type -->
-          <div>
+          <div class="w-100">
             <label class="block text-xs font-medium text-gray-600 mb-1">Content Type</label>
             <select v-model="localConfig.contentType" @change="debouncedUpdate"
               class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">

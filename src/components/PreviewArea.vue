@@ -1,22 +1,18 @@
 <template>
   <div class="h-full flex flex-col bg-white">
-    <div class="flex-1 overflow-y-auto p-4">
+    <div class="flex-1 overflow-y-auto p-2">
       <div class="w-full">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Command Preview</h2>
+        <!-- <h2 class="text-lg font-semibold text-gray-800 mb-4">Command Preview</h2> -->
 
         <!-- Encoding Mode Selector -->
-        <div class="mb-4">
+        <div class="mb-2">
           <div class="flex gap-2">
-            <button
-              v-for="mode in encodingModes"
-              :key="mode.value"
-              @click="encodingMode = mode.value"
-              :class="[
-                'px-4 py-2 text-sm rounded-md transition-colors',
-                encodingMode === mode.value
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              ]">
+            <button v-for="mode in encodingModes" :key="mode.value" @click="encodingMode = mode.value" :class="[
+              'px-4 py-2 text-sm rounded-md transition-colors',
+              encodingMode === mode.value
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            ]">
               {{ mode.label }}
             </button>
           </div>
@@ -26,9 +22,9 @@
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-2">Netcat Command</label>
           <div class="relative">
-            <pre class="w-full bg-gray-900 text-green-400 p-4 rounded-lg text-sm font-mono overflow-x-auto whitespace-pre-wrap">{{ generatedCommand }}</pre>
-            <button
-              @click="copyCommand"
+            <pre
+              class="w-full bg-gray-900 text-green-400 p-4 rounded-lg text-sm font-mono overflow-x-auto whitespace-pre-wrap">{{ generatedCommand }}</pre>
+            <button @click="copyCommand"
               class="absolute top-2 right-2 px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded">
               {{ copyButtonText }}
             </button>

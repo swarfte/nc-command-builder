@@ -2,7 +2,7 @@
   <div class="flex flex-col bg-white">
     <div class="overflow-y-auto pr-2 pl-2 pt-2 ">
       <div class="w-full">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Configuration</h2>
+        <h2 class="text-lg font-semibold text-gray-800 mb-2">Configuration</h2>
 
         <!-- Basic Configuration -->
         <div class="mb-4">
@@ -100,7 +100,7 @@
           </div>
         </div>
         <!-- Network Options -->
-        <div class="mb-4">
+        <div class="mb-2">
           <!-- <h3 class="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Network</h3> -->
           <div class="grid grid-cols-3 gap-2">
             <!-- Verbose -->
