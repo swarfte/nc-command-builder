@@ -4,45 +4,175 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Tkinter GUI tool for building netcat commands during CTF competitions. Single-file application (`main.py`) using ttkbootstrap theming.
+This is a **Vue.js + TypeScript web application** that provides a GUI for building netcat commands. The application is designed for CTF players, pentesters, and security professionals who need to quickly construct complex netcat commands with proper payloads.
 
-## Run
+**Note:** The README.md references a Python/Tkinter version that appears to be from an earlier iteration or different implementation. The current codebase is entirely Vue.js + TypeScript.
 
+## Development Commands
+
+### Running the Development Server
 ```bash
-uv run python main.py
+npm run dev
 ```
+Starts the Vite development server with hot reload.
 
-Requires Python >=3.14. Dependencies managed by uv (`pyproject.toml` + `uv.lock`).
-
-## Build (Windows exe)
-
+### Building for Production
 ```bash
-uv run pyinstaller --onefile --windowed main.py
+npm run build
 ```
+Builds the application using `vue-tsc` for type checking followed by `vite build`. Output is in the `dist/` directory.
+
+### Preview Production Build
+```bash
+npm run preview
+```
+Preview the production build locally.
 
 ## Architecture
 
-Everything lives in `main.py` (~550 lines):
+### State Management with Pinia
 
-- **`TEMPLATES` / `NC_FLAVORS`** — dict constants for payload templates and nc variant mappings
-- **`payload_to_printf()`** — converts raw payload to printf-safe string (handles plain, escapes, hex, base64 modes)
-- **`build_command()`** — assembles final shell command string from all parameters; handles flag ordering (`-p` before port in listen mode), flavor-specific behavior, and payload piped via printf/echo
-- **`NcCommandBuilder(ttk.Window)`** — main GUI class, three-section layout:
-  - Top bar: target host/port, mode (Connect/Listen), protocol, nc flavor
-  - Middle: payload editor (left) + helper buttons and profile save/load (right)
-  - Bottom: options checkboxes, command preview, copy/run buttons
-- **Profiles** — JSON files in `profiles/` directory, created at runtime
+The application uses **Pinia** for state management with two primary stores that sync with each other:
 
-## Key Design Decisions
+1. **useFolderStore** (`src/stores.ts` lines 32-196)
+   - Manages profile organization in folders
+   - Persists to localStorage as `nc-folder-store-v2`
+   - Contains folder CRUD operations and profile storage
+   - Includes a "General" folder that cannot be deleted
 
-- Default nc flavor is **GNU netcat** (not OpenBSD). Listen mode uses `-p` before port for OpenBSD/ncat but omits it for GNU.
-- Payloads are piped via `printf` (preferred) or `echo -e`. The `payload_to_printf` function escapes control characters to `\x` notation.
-- All tkinter variables use `trace_add("write")` to trigger live command preview updates.
-- `_run_command` opens a new terminal window (`cmd /k` on Windows, `x-terminal-emulator` on Linux).
+2. **useProfileStore** (`src/stores.ts` lines 199-247)
+   - Manages the currently active profile
+   - Persists to localStorage as `nc-current-profile-v2`
+   - Provides `updateProfile()`, `loadProfile()`, and `resetProfile()` methods
 
-## Dependencies
+**Important:** When updating profile data, you typically need to update **both stores** to keep them synchronized. See the pattern in `ConfigArea.vue` lines 208-226.
 
-- `ttkbootstrap` — themed Tkinter widgets (cosmo theme)
-- `tkinterdnd2` — drag-and-drop (declared but not yet used in code)
-- `pygments` — syntax highlighting (declared but not yet used in code)
-- `pyinstaller` — packaging only
+### Component Architecture
+
+The application uses a **4-panel grid layout** (`src/App.vue`):
+
+1. **ProfileArea** (`src/components/ProfileArea.vue`)
+   - Left sidebar for profile management
+   - Folder organization with create/rename/delete
+   - Profile save/load functionality
+   - Tree-view navigation
+
+2. **ConfigArea** (`src/components/ConfigArea.vue`)
+   - Target configuration (host, port, path)
+   - Connection settings (mode, protocol, netcat flavor)
+   - Advanced options (timeout, DNS, verbose, keep-alive)
+   - Uses local state with two-way binding to stores
+
+3. **PayloadArea** (`src/components/PayloadArea.vue`)
+   - Three payload modes: Raw, GET, POST
+   - **Raw mode**: Direct text input for custom payloads
+   - **GET mode**: Key-value parameter builder for query strings
+   - **POST mode**: Key-value body parameter builder with content-type selection
+   - Each mode maintains independent data that's preserved when switching
+
+4. **PreviewArea** (`src/components/PreviewArea.vue`)
+   - Real-time command generation and preview
+   - Flavor-specific flag handling (GNU vs OpenBSD vs Ncat vs socat)
+   - Copy-to-clipboard functionality
+   - Contains the core command generation logic
+
+### Data Flow Patterns
+
+**Profile Updates:**
+```
+User Input → Component Local State → useProfileStore.updateProfile() → useFolderStore.updateProfileInFolder()
+```
+
+**Mode Switching:**
+When switching between payload modes (Raw/GET/POST), each mode maintains its own independent data. The component tracks the current profile ID to detect profile switches and reload data appropriately.
+
+**Command Generation:**
+The `PreviewArea` component contains `generateNetcatCommand()` (lines 42-117) which:
+1. Selects appropriate base command and flags based on netcat flavor
+2. Handles flavor-specific syntax differences
+3. Generates HTTP requests for GET/POST modes with proper headers
+4. Applies URL encoding when needed
+
+### Key TypeScript Types
+
+**Profile Interface** (`src/models.ts` lines 1-24):
+```typescript
+interface Profile {
+  id: string;                    // UUID identifier
+  version: string;               // Schema version
+  profileName: string;          // Display name
+  host: string;                 // Target hostname
+  port: number;                 // Target port
+  path: string;                 // HTTP path
+  targetMode: string;           // 'connect' | 'listen'
+  protocol: string;             // 'TCP' | 'UDP'
+  flavor: string;               // Netcat flavor
+  payloadMode: string;          // 'Raw' | 'GET' | 'POST'
+  outputType: string;           // 'printf' | 'echo'
+  query?: string;               // GET query string
+  body?: string;                // POST body content
+  rawPayload?: string;          // Raw payload text
+  contentType: string;         // HTTP content type
+  connection: string;           // HTTP connection header
+  // ... various boolean flags and numeric options
+}
+```
+
+**Folder Interface** (`src/models.ts` lines 26-30):
+```typescript
+interface Folder {
+  id: string;
+  folderName: string;
+  profiles: Profile[];
+}
+```
+
+## Common Development Patterns
+
+### Adding New Configuration Options
+1. Add the field to the `Profile` interface in `src/models.ts`
+2. Update `createDefaultProfile()` in `src/stores.ts`
+3. Add UI controls in the appropriate component (typically `ConfigArea.vue`)
+4. Include the field in command generation logic in `PreviewArea.vue`
+
+### Adding Netcat Flavors
+Update the flavor-specific functions in `PreviewArea.vue`:
+- `getBaseCommand()` (lines 120-135)
+- `getUDPFlag()` (lines 138-153)
+- `getListenFlag()` (lines 156-172)
+- `getKeepAliveFlag()` (lines 174-189)
+
+### Component Communication
+Components use Pinia stores for shared state. When a component needs to react to profile changes from elsewhere, use the `watch()` pattern:
+```typescript
+watch(() => profileStore.currentProfile.id, (newId, oldId) => {
+  if (newId !== oldId) {
+    loadCurrentProfile()
+  }
+})
+```
+
+## Technology Stack
+
+- **Vue 3** with Composition API and `<script setup>`
+- **TypeScript** for type safety
+- **Vite** as build tool and dev server
+- **Pinia** for state management with persistence
+- **Tailwind CSS v4** for styling
+- **Vue DevTools** plugin for debugging
+
+## File Structure
+
+```
+src/
+├── App.vue              # Main layout with 4-panel grid
+├── main.ts              # Application entry point
+├── models.ts            # TypeScript interfaces (Profile, Folder)
+├── stores.ts            # Pinia stores (useFolderStore, useProfileStore)
+├── style.css            # Global styles
+└── components/
+    ├── ConfigArea.vue   # Target and connection configuration
+    ├── PayloadArea.vue  # Payload editor (Raw/GET/POST modes)
+    ├── PreviewArea.vue  # Command generation and preview
+    └── ProfileArea.vue  # Profile management sidebar
+```
