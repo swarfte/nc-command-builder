@@ -233,8 +233,15 @@ const getPayloadForCommand = () => {
 const generateGETRequest = () => {
   const cfg = config.value
   const queryParams = cfg.query || ''
+  const path = cfg.path || '/'
 
-  let request = `GET /?${queryParams} HTTP/1.1\r\n`
+  // Handle query parameters
+  let fullPath = path
+  if (queryParams) {
+    fullPath += path.includes('?') ? `&${queryParams}` : `?${queryParams}`
+  }
+
+  let request = `GET ${fullPath} HTTP/1.1\r\n`
   request += `Host: ${cfg.host}\r\n`
   request += `User-Agent: netcat-command-builder\r\n`
   request += `Accept: */*\r\n`
@@ -246,8 +253,9 @@ const generateGETRequest = () => {
 // Generate POST request
 const generatePOSTRequest = () => {
   const cfg = config.value
+  const path = cfg.path || '/'
 
-  let request = `POST / HTTP/1.1\r\n`
+  let request = `POST ${path} HTTP/1.1\r\n`
   request += `Host: ${cfg.host}\r\n`
   request += `User-Agent: netcat-command-builder\r\n`
   request += `Content-Type: ${cfg.contentType}\r\n`

@@ -7,7 +7,7 @@
         <!-- Basic Configuration -->
         <div class="mb-4">
           <!-- <h3 class="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Basic</h3> -->
-          <div class="grid grid-cols-5 gap-2">
+          <div class="grid grid-cols-6 gap-2">
             <!-- Host -->
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Host</label>
