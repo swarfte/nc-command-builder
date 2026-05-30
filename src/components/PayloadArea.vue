@@ -2,21 +2,17 @@
   <div class="h-full flex flex-col bg-white">
     <div class="flex-1 overflow-y-auto p-4">
       <div class="w-full">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Payload Configuration</h2>
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Payload</h2>
 
         <!-- Payload Mode Selector -->
         <div class="mb-4">
           <div class="flex gap-2">
-            <button
-              v-for="mode in payloadModes"
-              :key="mode.value"
-              @click="switchPayloadMode(mode.value)"
-              :class="[
-                'px-4 py-2 text-sm rounded-md transition-colors',
-                localConfig.payloadMode === mode.value
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              ]">
+            <button v-for="mode in payloadModes" :key="mode.value" @click="switchPayloadMode(mode.value)" :class="[
+              'px-4 py-2 text-sm rounded-md transition-colors',
+              localConfig.payloadMode === mode.value
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            ]">
               {{ mode.label }}
             </button>
           </div>
@@ -26,8 +22,7 @@
         <div v-if="localConfig.payloadMode === 'Raw'" class="space-y-4">
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Raw Payload</label>
-            <textarea
-              v-model="localConfig.rawPayload"
+            <textarea v-model="localConfig.rawPayload"
               class="w-full rounded border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[300px]"
               placeholder="Enter your raw payload here..." />
             <p class="mt-1 text-xs text-gray-500">Enter complete payload as you would send it via netcat</p>
@@ -39,28 +34,19 @@
           <div>
             <div class="flex items-center justify-between mb-2">
               <label class="text-xs font-medium text-gray-600">Query Parameters</label>
-              <button
-                @click="addQueryParameter"
-                type="button"
-                class="text-xs text-blue-600 hover:text-blue-700">
+              <button @click="addQueryParameter" type="button" class="text-xs text-blue-600 hover:text-blue-700">
                 + Add Parameter
               </button>
             </div>
             <div class="space-y-2">
               <div v-for="(param, index) in queryParameters" :key="index" class="grid grid-cols-12 gap-2 items-center">
-                <input
-                  v-model="param.key"
-                  @input="updateQueryParameters"
+                <input v-model="param.key" @input="debouncedUpdate"
                   class="col-span-5 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Key" />
-                <input
-                  v-model="param.value"
-                  @input="updateQueryParameters"
+                <input v-model="param.value" @input="debouncedUpdate"
                   class="col-span-5 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Value" />
-                <button
-                  @click="removeQueryParameter(index)"
-                  type="button"
+                <button @click="removeQueryParameter(index)" type="button"
                   class="col-span-2 text-red-500 hover:text-red-600 text-sm">
                   Remove
                 </button>
@@ -74,9 +60,7 @@
           <!-- Content Type -->
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Content Type</label>
-            <select
-              v-model="localConfig.contentType"
-              @change="updateBodyParameters"
+            <select v-model="localConfig.contentType" @change="debouncedUpdate"
               class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
               <option value="application/json">application/json</option>
               <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
@@ -90,28 +74,19 @@
           <div>
             <div class="flex items-center justify-between mb-2">
               <label class="text-xs font-medium text-gray-600">Body Parameters</label>
-              <button
-                @click="addBodyParameter"
-                type="button"
-                class="text-xs text-blue-600 hover:text-blue-700">
+              <button @click="addBodyParameter" type="button" class="text-xs text-blue-600 hover:text-blue-700">
                 + Add Parameter
               </button>
             </div>
             <div class="space-y-2">
               <div v-for="(param, index) in bodyParameters" :key="index" class="grid grid-cols-12 gap-2 items-center">
-                <input
-                  v-model="param.key"
-                  @input="updateBodyParameters"
+                <input v-model="param.key" @input="debouncedUpdate"
                   class="col-span-5 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Key" />
-                <input
-                  v-model="param.value"
-                  @input="updateBodyParameters"
+                <input v-model="param.value" @input="debouncedUpdate"
                   class="col-span-5 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Value" />
-                <button
-                  @click="removeBodyParameter(index)"
-                  type="button"
+                <button @click="removeBodyParameter(index)" type="button"
                   class="col-span-2 text-red-500 hover:text-red-600 text-sm">
                   Remove
                 </button>
@@ -125,14 +100,16 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, nextTick } from 'vue'
 import { useProfileStore, useFolderStore } from '../stores'
 
 const profileStore = useProfileStore()
 const folderStore = useFolderStore()
 
-// Flag to prevent circular updates
+// Track current profile ID to detect profile switches
+const currentProfileId = ref('')
 const isUpdatingFromStore = ref(false)
+let updateTimeout: number | null = null
 
 // Payload modes
 const payloadModes = [
@@ -163,8 +140,16 @@ const initializeEmptyParameters = (count: number = 4) => {
 
 // Load current profile into local config
 const loadCurrentProfile = () => {
-  isUpdatingFromStore.value = true
   const profile = profileStore.currentProfile
+
+  // Check if this is actually a different profile
+  if (profile.id === currentProfileId.value && isUpdatingFromStore.value) {
+    return
+  }
+
+  isUpdatingFromStore.value = true
+  currentProfileId.value = profile.id
+
   localConfig.value = {
     payloadMode: profile.payloadMode || 'GET',
     query: profile.query || '',
@@ -186,7 +171,7 @@ const loadCurrentProfile = () => {
     queryParameters.value = initializeEmptyParameters(4)
   }
 
-  // Parse body parameters from body string (simplified for JSON)
+  // Parse body parameters from body string
   if (profile.body && profile.contentType === 'application/json') {
     try {
       const obj = JSON.parse(profile.body)
@@ -208,10 +193,10 @@ const loadCurrentProfile = () => {
     bodyParameters.value = initializeEmptyParameters(4)
   }
 
-  // Reset flag after a small delay to prevent immediate trigger
+  // Reset flag after a small delay
   setTimeout(() => {
     isUpdatingFromStore.value = false
-  }, 50)
+  }, 100)
 }
 
 // Find the folder that contains the current profile
@@ -264,6 +249,7 @@ const updateProfileInStores = () => {
   }
 
   // Update current profile in profile store
+  isUpdatingFromStore.value = true
   profileStore.updateProfile({
     payloadMode: localConfig.value.payloadMode,
     query: localConfig.value.query,
@@ -273,9 +259,7 @@ const updateProfileInStores = () => {
   })
 
   // Also update the profile in the folder store
-  const currentProfileId = profileStore.currentProfile.id
-  const folder = findFolderForProfile(currentProfileId)
-
+  const folder = findFolderForProfile(currentProfileId.value)
   if (folder) {
     const updatedProfile = {
       ...profileStore.currentProfile,
@@ -287,6 +271,19 @@ const updateProfileInStores = () => {
     }
     folderStore.updateProfileInFolder(folder.id, updatedProfile)
   }
+
+  // Reset flag
+  setTimeout(() => {
+    isUpdatingFromStore.value = false
+  }, 50)
+}
+
+// Debounced update for input changes
+const debouncedUpdate = () => {
+  if (updateTimeout) clearTimeout(updateTimeout)
+  updateTimeout = setTimeout(() => {
+    updateProfileInStores()
+  }, 300) as unknown as number
 }
 
 // Switch payload mode
@@ -298,45 +295,47 @@ const switchPayloadMode = (mode: string) => {
 // Add query parameter
 const addQueryParameter = () => {
   queryParameters.value.push({ key: '', value: '' })
-  updateProfileInStores()
+  nextTick(() => {
+    updateProfileInStores()
+  })
 }
 
 // Remove query parameter
 const removeQueryParameter = (index: number) => {
   queryParameters.value.splice(index, 1)
-  updateProfileInStores()
-}
-
-// Update query parameters (called on input change)
-const updateQueryParameters = () => {
-  updateProfileInStores()
+  nextTick(() => {
+    updateProfileInStores()
+  })
 }
 
 // Add body parameter
 const addBodyParameter = () => {
   bodyParameters.value.push({ key: '', value: '' })
-  updateProfileInStores()
+  nextTick(() => {
+    updateProfileInStores()
+  })
 }
 
 // Remove body parameter
 const removeBodyParameter = (index: number) => {
   bodyParameters.value.splice(index, 1)
-  updateProfileInStores()
+  nextTick(() => {
+    updateProfileInStores()
+  })
 }
 
-// Update body parameters (called on input change)
-const updateBodyParameters = () => {
-  updateProfileInStores()
-}
+// Watch for profile ID changes (profile switching)
+watch(() => profileStore.currentProfile.id, (newId, oldId) => {
+  if (newId !== oldId) {
+    loadCurrentProfile()
+  }
+})
 
-// Watch local config changes and update both stores
+// Watch local config changes (for raw payload and content type)
 watch(localConfig, () => {
-  updateProfileInStores()
-}, { deep: true })
-
-// Watch for profile changes from other components (like switching profiles)
-watch(() => profileStore.currentProfile, () => {
-  loadCurrentProfile()
+  if (!isUpdatingFromStore.value) {
+    updateProfileInStores()
+  }
 }, { deep: true })
 
 // Load current profile on mount
