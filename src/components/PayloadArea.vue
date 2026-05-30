@@ -32,10 +32,10 @@
         <!-- GET Mode -->
         <div v-if="localConfig.payloadMode === 'GET'" class="space-y-4">
           <div>
-            <div class="flex items-center justify-between mb-2">
-              <label class="text-xs font-medium text-gray-600">Query Parameters</label>
+            <div class="grid grid-cols-12 gap-2 items-center mb-2">
+              <label class="col-span-10 text-xs font-medium text-gray-600">Query Parameters</label>
               <button @click="addQueryParameter" type="button"
-                class="inline-flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 hover:text-blue-800">
+                class="col-span-2 inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 hover:text-blue-800">
                 <span class="text-base leading-none">+</span>
                 Add Parameter
               </button>
@@ -43,13 +43,13 @@
             <div class="space-y-2">
               <div v-for="(param, index) in queryParameters" :key="index" class="grid grid-cols-12 gap-2 items-center">
                 <input v-model="param.key" @input="debouncedUpdate"
-                  class="col-span-5 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="col-span-5 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Key" />
                 <input v-model="param.value" @input="debouncedUpdate"
-                  class="col-span-5 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="col-span-5 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Value" />
                 <button @click="removeQueryParameter(index)" type="button"
-                  class="col-span-2 inline-flex items-center justify-center rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 hover:text-red-700">
+                  class="col-span-2 inline-flex h-9 items-center justify-center rounded-md border border-red-200 bg-red-50 px-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 hover:text-red-700">
                   Remove
                 </button>
               </div>
@@ -74,10 +74,10 @@
 
           <!-- Body Parameters -->
           <div>
-            <div class="flex items-center justify-between mb-2">
-              <label class="text-xs font-medium text-gray-600">Body Parameters</label>
+            <div class="grid grid-cols-12 gap-2 items-center mb-2">
+              <label class="col-span-10 text-xs font-medium text-gray-600">Body Parameters</label>
               <button @click="addBodyParameter" type="button"
-                class="inline-flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 hover:text-blue-800">
+                class="col-span-2 inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 hover:text-blue-800">
                 <span class="text-base leading-none">+</span>
                 Add Parameter
               </button>
@@ -85,13 +85,13 @@
             <div class="space-y-2">
               <div v-for="(param, index) in bodyParameters" :key="index" class="grid grid-cols-12 gap-2 items-center">
                 <input v-model="param.key" @input="debouncedUpdate"
-                  class="col-span-5 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="col-span-5 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Key" />
                 <input v-model="param.value" @input="debouncedUpdate"
-                  class="col-span-5 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="col-span-5 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Value" />
                 <button @click="removeBodyParameter(index)" type="button"
-                  class="col-span-2 inline-flex items-center justify-center rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 hover:text-red-700">
+                  class="col-span-2 inline-flex h-9 items-center justify-center rounded-md border border-red-200 bg-red-50 px-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 hover:text-red-700">
                   Remove
                 </button>
               </div>
