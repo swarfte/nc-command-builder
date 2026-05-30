@@ -23,7 +23,7 @@
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Raw Payload</label>
             <textarea v-model="localConfig.rawPayload"
-              class="w-full rounded border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[300px]"
+              class="w-full rounded border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[100px]"
               placeholder="Enter your raw payload here..." />
             <p class="mt-1 text-xs text-gray-500">Enter complete payload as you would send it via netcat</p>
           </div>
@@ -133,8 +133,8 @@ const queryParameters = ref<Array<{ key: string; value: string }>>([])
 // Body parameters for POST mode
 const bodyParameters = ref<Array<{ key: string; value: string }>>([])
 
-// Initialize 4 empty rows for parameters
-const initializeEmptyParameters = (count: number = 4) => {
+// Initialize 2 empty rows for parameters
+const initializeEmptyParameters = (count: number = 2) => {
   return Array.from({ length: count }, () => ({ key: '', value: '' }))
 }
 
@@ -166,9 +166,9 @@ const loadCurrentProfile = () => {
         const [key, value] = param.split('=')
         return { key: decodeURIComponent(key), value: decodeURIComponent(value) }
       })
-    queryParameters.value = parsed.length > 0 ? parsed : initializeEmptyParameters(4)
+    queryParameters.value = parsed.length > 0 ? parsed : initializeEmptyParameters()
   } else {
-    queryParameters.value = initializeEmptyParameters(4)
+    queryParameters.value = initializeEmptyParameters()
   }
 
   // Parse body parameters from body string
@@ -177,9 +177,9 @@ const loadCurrentProfile = () => {
       const obj = JSON.parse(profile.body)
       const parsed = Object.entries(obj)
         .map(([key, value]) => ({ key, value: String(value) }))
-      bodyParameters.value = parsed.length > 0 ? parsed : initializeEmptyParameters(4)
+      bodyParameters.value = parsed.length > 0 ? parsed : initializeEmptyParameters()
     } catch {
-      bodyParameters.value = initializeEmptyParameters(4)
+      bodyParameters.value = initializeEmptyParameters()
     }
   } else if (profile.body && profile.contentType === 'application/x-www-form-urlencoded') {
     const parsed = profile.body.split('&')
@@ -188,9 +188,9 @@ const loadCurrentProfile = () => {
         const [key, value] = param.split('=')
         return { key: decodeURIComponent(key), value: decodeURIComponent(value) }
       })
-    bodyParameters.value = parsed.length > 0 ? parsed : initializeEmptyParameters(4)
+    bodyParameters.value = parsed.length > 0 ? parsed : initializeEmptyParameters()
   } else {
-    bodyParameters.value = initializeEmptyParameters(4)
+    bodyParameters.value = initializeEmptyParameters()
   }
 
   // Reset flag after a small delay

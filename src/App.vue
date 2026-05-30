@@ -8,7 +8,7 @@ import ConfigArea from "./components/ConfigArea.vue";
 
 <template>
 
-  <div class="grid grid-cols-12 grid-rows-9 gap-4">
+  <div class="grid grid-cols-12 grid-rows-9 gap-2">
     <div class="col-span-2 row-span-9">
       <ProfileArea />
     </div>
