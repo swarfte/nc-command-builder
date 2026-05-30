@@ -1,8 +1,8 @@
 <template>
   <div class="h-full flex flex-col bg-white">
-    <div class="flex-1 overflow-y-auto p-4">
+    <div class="flex-1 overflow-y-auto pl-2 pr-2">
       <div class="w-full">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Payload</h2>
+
 
         <!-- Payload Mode Selector -->
         <div class="mb-4">

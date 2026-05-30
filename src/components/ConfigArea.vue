@@ -1,6 +1,6 @@
 <template>
-  <div class="h-full flex flex-col bg-white">
-    <div class="flex-1 overflow-y-auto p-4">
+  <div class="flex flex-col bg-white">
+    <div class="overflow-y-auto pr-2 pl-2 pt-2 ">
       <div class="w-full">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">Configuration</h2>
 
