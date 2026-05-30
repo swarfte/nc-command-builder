@@ -4,20 +4,6 @@
       <div class="w-full">
         <!-- <h2 class="text-lg font-semibold text-gray-800 mb-4">Command Preview</h2> -->
 
-        <!-- Encoding Mode Selector -->
-        <div class="mb-2">
-          <div class="flex gap-2">
-            <button v-for="mode in encodingModes" :key="mode.value" @click="encodingMode = mode.value" :class="[
-              'px-4 py-2 text-sm rounded-md transition-colors',
-              encodingMode === mode.value
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            ]">
-              {{ mode.label }}
-            </button>
-          </div>
-        </div>
-
         <!-- Generated Command -->
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-2">Netcat Command</label>
@@ -40,12 +26,6 @@ import { ref, computed } from 'vue'
 import { useProfileStore } from '../stores'
 
 const profileStore = useProfileStore()
-
-// Encoding modes
-const encodingModes = [
-  { label: 'Original', value: 'original' },
-  { label: 'URL-Encoded', value: 'url-encoded' },
-]
 
 const encodingMode = ref('original')
 const copyButtonText = ref('Copy')
