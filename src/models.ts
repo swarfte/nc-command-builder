@@ -4,6 +4,7 @@ export interface Profile {
   profileName: string;
   host: string;
   port: number;
+  path: string;
   targetMode: string;
   protocol: string;
   flavor: string;

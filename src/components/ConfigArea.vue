@@ -24,6 +24,14 @@
                 type="number" placeholder="8080" />
             </div>
 
+            <!-- Path -->
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Path</label>
+              <input v-model="localConfig.path"
+                class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                type="text" placeholder="/api/endpoint" />
+            </div>
+
             <!-- Operation Mode -->
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Mode</label>
@@ -153,6 +161,7 @@ const isUpdatingFromStore = ref(false)
 const localConfig = ref({
   host: 'localhost',
   port: 8080,
+  path: '',
   targetMode: 'connect',
   protocol: 'TCP',
   flavor: 'GNU netcat',
@@ -171,6 +180,7 @@ const loadCurrentProfile = () => {
   localConfig.value = {
     host: profile.host,
     port: profile.port,
+    path: profile.path || '',
     targetMode: profile.targetMode,
     protocol: profile.protocol,
     flavor: profile.flavor,
