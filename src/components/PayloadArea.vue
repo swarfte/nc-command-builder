@@ -34,8 +34,10 @@
           <div>
             <div class="flex items-center justify-between mb-2">
               <label class="text-xs font-medium text-gray-600">Query Parameters</label>
-              <button @click="addQueryParameter" type="button" class="text-xs text-blue-600 hover:text-blue-700">
-                + Add Parameter
+              <button @click="addQueryParameter" type="button"
+                class="inline-flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 hover:text-blue-800">
+                <span class="text-base leading-none">+</span>
+                Add Parameter
               </button>
             </div>
             <div class="space-y-2">
@@ -47,7 +49,7 @@
                   class="col-span-5 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Value" />
                 <button @click="removeQueryParameter(index)" type="button"
-                  class="col-span-2 text-red-500 hover:text-red-600 text-sm">
+                  class="col-span-2 inline-flex items-center justify-center rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 hover:text-red-700">
                   Remove
                 </button>
               </div>
@@ -74,8 +76,10 @@
           <div>
             <div class="flex items-center justify-between mb-2">
               <label class="text-xs font-medium text-gray-600">Body Parameters</label>
-              <button @click="addBodyParameter" type="button" class="text-xs text-blue-600 hover:text-blue-700">
-                + Add Parameter
+              <button @click="addBodyParameter" type="button"
+                class="inline-flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 hover:text-blue-800">
+                <span class="text-base leading-none">+</span>
+                Add Parameter
               </button>
             </div>
             <div class="space-y-2">
@@ -87,7 +91,7 @@
                   class="col-span-5 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Value" />
                 <button @click="removeBodyParameter(index)" type="button"
-                  class="col-span-2 text-red-500 hover:text-red-600 text-sm">
+                  class="col-span-2 inline-flex items-center justify-center rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 hover:text-red-700">
                   Remove
                 </button>
               </div>
