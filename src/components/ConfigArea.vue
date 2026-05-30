@@ -72,7 +72,15 @@
         <!-- Advanced Options -->
         <div class="mb-4">
           <!-- <h3 class="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">Advanced</h3> -->
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-4 gap-2">
+            <!-- User Agent -->
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">User Agent</label>
+              <input v-model="localConfig.userAgent"
+                class="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                type="text" placeholder="netcat-command-builder" />
+            </div>
+
             <!-- Timeout -->
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Timeout</label>
@@ -168,6 +176,7 @@ const localConfig = ref({
   isVerbose: true,
   isNoDNS: false,
   isKeepListening: true,
+  userAgent: 'netcat-command-builder',
   timeout: 5,
   closeDelay: 0,
   bindCommand: '',
@@ -187,6 +196,7 @@ const loadCurrentProfile = () => {
     isVerbose: profile.isVerbose,
     isNoDNS: profile.isNoDNS,
     isKeepListening: profile.isKeepListening,
+    userAgent: profile.userAgent || 'netcat-command-builder',
     timeout: profile.timeout,
     closeDelay: profile.closeDelay || 0,
     bindCommand: profile.bindCommand || '',

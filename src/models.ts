@@ -10,6 +10,7 @@ export interface Profile {
   flavor: string;
   payloadMode: string;
   outputType: string;
+  userAgent: string;
   query?: string;
   body?: string;
   rawPayload?: string;

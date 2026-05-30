@@ -231,7 +231,7 @@ const generateGETRequest = () => {
 
   let request = `GET ${fullPath} HTTP/1.1\r\n`
   request += `Host: ${cfg.host}\r\n`
-  request += `User-Agent: netcat-command-builder\r\n`
+  request += `User-Agent: ${cfg.userAgent}\r\n`
   request += `Accept: */*\r\n`
   request += `Connection: ${cfg.connection}\r\n\r\n`
 
@@ -245,7 +245,7 @@ const generatePOSTRequest = () => {
 
   let request = `POST ${path} HTTP/1.1\r\n`
   request += `Host: ${cfg.host}\r\n`
-  request += `User-Agent: netcat-command-builder\r\n`
+  request += `User-Agent: ${cfg.userAgent}\r\n`
   request += `Content-Type: ${cfg.contentType}\r\n`
 
   // Handle body with URL encoding if needed for form data
