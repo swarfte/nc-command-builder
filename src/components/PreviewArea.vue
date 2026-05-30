@@ -89,8 +89,8 @@ const generateNetcatCommand = () => {
     parts.push('-n')
   }
 
-  // Add keep listening flag
-  if (cfg.isKeepListening) {
+  // Add keep listening flag (only for listen mode)
+  if (cfg.isKeepListening && cfg.targetMode === 'listen') {
     const keepAliveFlag = getKeepAliveFlag(cfg.flavor)
     if (keepAliveFlag) parts.push(keepAliveFlag)
   }
