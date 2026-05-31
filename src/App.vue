@@ -9,7 +9,7 @@ import ConfigArea from "./components/ConfigArea.vue";
 <template>
 
   <div class="relative grid grid-cols-12 gap-2 items-stretch min-h-screen">
-    <a class="absolute right-3 top-3 inline-flex size-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:border-gray-300 hover:text-gray-900"
+    <a class="absolute right-3 top-3 inline-flex size-9 items-center justify-center rounded-full "
       href="https://github.com/swarfte/nc-command-builder" target="_blank" rel="noopener noreferrer"
       aria-label="Open GitHub repository" title="Open GitHub repository">
       <svg viewBox="0 0 24 24" aria-hidden="true" class="size-5" fill="currentColor">
