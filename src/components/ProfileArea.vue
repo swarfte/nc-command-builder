@@ -100,6 +100,20 @@
         <span>Export Folder</span>
       </button>
 
+      <button v-if="contextMenu.options.showImportProfile"
+        class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+        @click="handleImportProfile">
+        <DocumentIcon class="size-4" />
+        <span>Import Profile</span>
+      </button>
+
+      <button v-if="contextMenu.options.showImportFolder"
+        class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+        @click="handleImportFolder">
+        <FolderIcon class="size-4" />
+        <span>Import Folder</span>
+      </button>
+
       <button v-if="contextMenu.options.showRename"
         class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2" @click="handleRename">
         <PencilIcon class="size-4" />
@@ -195,6 +209,9 @@
         </div>
       </div>
     </div>
+
+    <input ref="importFileInput" class="hidden" type="file" accept="application/json"
+      @change="handleImportFileChange" />
   </div>
 </template>
 
@@ -270,6 +287,8 @@ interface ContextMenuOptions {
   showNewFolder: boolean
   showExportProfile: boolean
   showExportFolder: boolean
+  showImportProfile: boolean
+  showImportFolder: boolean
   showDuplicate: boolean
   showRename: boolean
   showDelete: boolean
@@ -293,6 +312,8 @@ const contextMenu = ref<ContextMenuState>({
     showNewFolder: false,
     showExportProfile: false,
     showExportFolder: false,
+    showImportProfile: false,
+    showImportFolder: false,
     showDuplicate: false,
     showRename: false,
     showDelete: false,
@@ -317,6 +338,8 @@ const renameFolderInput = ref<HTMLInputElement | null>(null)
 // Reset confirmation dialog state
 const showResetConfirmDialog = ref(false)
 const dragOverFolderId = ref<string | null>(null)
+const importFileInput = ref<HTMLInputElement | null>(null)
+const importAction = ref<{ mode: 'profile' | 'folder'; targetFolderId?: string } | null>(null)
 
 // Toggle folder expansion
 const toggleFolder = (folderId: string) => {
@@ -453,6 +476,81 @@ const exportFolder = (folder: Folder) => {
   downloadExport(payload, fileName)
 }
 
+const makeUniqueFolderName = (baseName: string) => {
+  let candidate = baseName.trim() || 'Imported Folder'
+  let counter = 1
+  while (folderList.value.some((folder) => folder.folderName === candidate)) {
+    counter += 1
+    candidate = `${baseName.trim() || 'Imported Folder'} (${counter})`
+  }
+  return candidate
+}
+
+const openImportDialog = (mode: 'profile' | 'folder', targetFolderId?: string) => {
+  importAction.value = { mode, targetFolderId }
+  if (importFileInput.value) {
+    importFileInput.value.value = ''
+    importFileInput.value.click()
+  }
+}
+
+const importProfile = (profile: Profile, targetFolderId: string) => {
+  const importedProfile: Profile = {
+    ...profile,
+    id: crypto.randomUUID(),
+  }
+  folderStore.addProfileToFolder(targetFolderId, importedProfile)
+  expandedFolders.value.add(targetFolderId)
+  expandedFolders.value = new Set(expandedFolders.value)
+}
+
+const importFolder = (folder: Folder) => {
+  const folderName = makeUniqueFolderName(folder.folderName)
+  const newFolder = folderStore.addFolder(folderName)
+  folder.profiles.forEach((profile) => {
+    importProfile(profile, newFolder.id)
+  })
+  expandedFolders.value.add(newFolder.id)
+  expandedFolders.value = new Set(expandedFolders.value)
+}
+
+const handleImportFileChange = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  const action = importAction.value
+  if (!file || !action) {
+    return
+  }
+
+  try {
+    const text = await file.text()
+    const payload = JSON.parse(text)
+
+    if (action.mode === 'profile') {
+      if (payload?.type !== 'nc-profile-export' || !payload?.profile) {
+        alert('Invalid profile export file.')
+        return
+      }
+      const targetFolderId = action.targetFolderId || '-1'
+      importProfile(payload.profile as Profile, targetFolderId)
+      return
+    }
+
+    if (action.mode === 'folder') {
+      if (payload?.type !== 'nc-folder-export' || !payload?.folder) {
+        alert('Invalid folder export file.')
+        return
+      }
+      importFolder(payload.folder as Folder)
+    }
+  } catch (error) {
+    alert(error instanceof Error ? error.message : 'Failed to import file')
+  } finally {
+    importAction.value = null
+    input.value = ''
+  }
+}
+
 // Close context menu
 const closeContextMenu = () => {
   contextMenu.value.show = false
@@ -472,6 +570,8 @@ const handleSidebarContextMenu = (event: MouseEvent) => {
       showNewFolder: true,
       showExportProfile: false,
       showExportFolder: false,
+      showImportProfile: true,
+      showImportFolder: true,
       showDuplicate: false,
       showRename: false,
       showDelete: false,
@@ -495,6 +595,8 @@ const handleFolderContextMenu = (event: MouseEvent, folder: Folder) => {
       showNewFolder: false,
       showExportProfile: false,
       showExportFolder: true,
+      showImportProfile: true,
+      showImportFolder: false,
       showDuplicate: true,      // Can duplicate any folder including General
       showRename: true,         // Can rename any folder including General
       showDelete: !isGeneralFolder, // Only restriction: can't delete General folder
@@ -517,6 +619,8 @@ const handleProfileContextMenu = (event: MouseEvent, folder: Folder, profile: Pr
       showNewFolder: false,
       showExportProfile: true,
       showExportFolder: false,
+      showImportProfile: false,
+      showImportFolder: false,
       showDuplicate: true,      // Can duplicate any profile including default
       showRename: true,         // Can rename any profile including default
       showDelete: !isDefaultProfile, // Only restriction: can't delete default profile
@@ -654,6 +758,17 @@ const handleExport = () => {
     exportFolder(contextMenu.value.targetFolder)
   }
 
+  closeContextMenu()
+}
+
+const handleImportProfile = () => {
+  const targetFolderId = contextMenu.value.targetFolder?.id || '-1'
+  openImportDialog('profile', targetFolderId)
+  closeContextMenu()
+}
+
+const handleImportFolder = () => {
+  openImportDialog('folder')
   closeContextMenu()
 }
 
