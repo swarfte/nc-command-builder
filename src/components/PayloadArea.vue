@@ -43,13 +43,13 @@
             <div class="space-y-2">
               <div v-for="(param, index) in queryParameters" :key="index" class="grid grid-cols-12 gap-2 items-center">
                 <input v-model="param.enabled" @change="debouncedUpdate"
-                  class="col-span-1 h-9 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  class="col-span-1 h-9 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   type="checkbox" />
                 <input v-model="param.key" @input="debouncedUpdate"
-                  class="col-span-5 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="col-span-3 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Key" />
                 <input v-model="param.value" @input="debouncedUpdate"
-                  class="col-span-4 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="col-span-6 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Value" />
                 <button @click="removeQueryParameter(index)" type="button"
                   class="col-span-2 inline-flex h-9 items-center justify-center rounded-md border border-red-200 bg-red-50 px-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 hover:text-red-700">
