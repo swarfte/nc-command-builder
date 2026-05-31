@@ -18,11 +18,11 @@
 
 
     <!-- sidebar content -->
-    <div class="flex-1 overflow-y-auto p-2 relative bg-gray-50" @contextmenu.self.prevent="handleSidebarContextMenu">
+    <div class="flex-1 overflow-y-auto p-2 relative bg-gray-50" @contextmenu.prevent="handleSidebarContextMenu">
       <div v-for="folder in folderList" :key="folder.id" class="mb-1">
         <!-- folder header -->
         <div class="flex items-center gap-2 p-2 rounded hover:bg-gray-200 cursor-pointer group"
-          @click="toggleFolder(folder.id)" @contextmenu.prevent="handleFolderContextMenu($event, folder)">
+          @click="toggleFolder(folder.id)" @contextmenu.stop.prevent="handleFolderContextMenu($event, folder)">
           <ChevronRightIcon :class="[
             'size-4 transition-transform',
             expandedFolders.has(folder.id) ? 'rotate-90' : ''
@@ -37,14 +37,14 @@
           <div v-for="profile in folder.profiles" :key="profile.id"
             class="flex items-center gap-2 p-2 rounded hover:bg-gray-200 cursor-pointer group"
             :class="{ 'bg-blue-100': currentProfile?.id === profile.id }" @click="loadProfile(profile)"
-            @contextmenu.prevent="handleProfileContextMenu($event, folder, profile)">
+            @contextmenu.stop.prevent="handleProfileContextMenu($event, folder, profile)">
             <DocumentIcon class="size-4 text-gray-500" />
             <span class="flex-1 text-sm text-gray-700 truncate">{{ profile.profileName }}</span>
           </div>
 
           <!-- empty state -->
           <div v-if="folder.profiles.length === 0" class="p-2 text-sm text-gray-400 italic"
-            @contextmenu.prevent="handleFolderContextMenu($event, folder)">
+            @contextmenu.stop.prevent="handleFolderContextMenu($event, folder)">
             Empty folder
           </div>
         </div>
