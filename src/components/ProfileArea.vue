@@ -88,6 +88,18 @@
         <span>Duplicate</span>
       </button>
 
+      <button v-if="contextMenu.options.showExportProfile"
+        class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2" @click="handleExport">
+        <DocumentIcon class="size-4" />
+        <span>Export Profile</span>
+      </button>
+
+      <button v-if="contextMenu.options.showExportFolder"
+        class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2" @click="handleExport">
+        <FolderIcon class="size-4" />
+        <span>Export Folder</span>
+      </button>
+
       <button v-if="contextMenu.options.showRename"
         class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2" @click="handleRename">
         <PencilIcon class="size-4" />
@@ -256,6 +268,8 @@ const getVisibleProfiles = (folder: Folder) => {
 interface ContextMenuOptions {
   showNewProfile: boolean
   showNewFolder: boolean
+  showExportProfile: boolean
+  showExportFolder: boolean
   showDuplicate: boolean
   showRename: boolean
   showDelete: boolean
@@ -277,6 +291,8 @@ const contextMenu = ref<ContextMenuState>({
   options: {
     showNewProfile: false,
     showNewFolder: false,
+    showExportProfile: false,
+    showExportFolder: false,
     showDuplicate: false,
     showRename: false,
     showDelete: false,
@@ -388,6 +404,55 @@ const handleFolderDrop = (event: DragEvent, targetFolder: Folder) => {
   expandedFolders.value = new Set(expandedFolders.value)
 }
 
+const createExportPayload = (data: Profile | Folder) => {
+  const timestamp = new Date().toISOString()
+  if ('profiles' in data) {
+    return {
+      type: 'nc-folder-export',
+      version: '1.0',
+      exportedAt: timestamp,
+      folder: {
+        id: data.id,
+        folderName: data.folderName,
+        profiles: data.profiles.map((profile) => ({ ...profile })),
+      },
+    }
+  }
+
+  return {
+    type: 'nc-profile-export',
+    version: '1.0',
+    exportedAt: timestamp,
+    profile: { ...data },
+  }
+}
+
+const downloadExport = (payload: object, fileName: string) => {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+const exportProfile = (profile: Profile) => {
+  const payload = createExportPayload(profile)
+  const safeName = profile.profileName.trim().replace(/\s+/g, '-').toLowerCase()
+  const fileName = `${safeName || 'profile'}-export.json`
+  downloadExport(payload, fileName)
+}
+
+const exportFolder = (folder: Folder) => {
+  const payload = createExportPayload(folder)
+  const safeName = folder.folderName.trim().replace(/\s+/g, '-').toLowerCase()
+  const fileName = `${safeName || 'folder'}-export.json`
+  downloadExport(payload, fileName)
+}
+
 // Close context menu
 const closeContextMenu = () => {
   contextMenu.value.show = false
@@ -405,6 +470,8 @@ const handleSidebarContextMenu = (event: MouseEvent) => {
     options: {
       showNewProfile: !!generalFolder,
       showNewFolder: true,
+      showExportProfile: false,
+      showExportFolder: false,
       showDuplicate: false,
       showRename: false,
       showDelete: false,
@@ -426,6 +493,8 @@ const handleFolderContextMenu = (event: MouseEvent, folder: Folder) => {
     options: {
       showNewProfile: true,
       showNewFolder: false,
+      showExportProfile: false,
+      showExportFolder: true,
       showDuplicate: true,      // Can duplicate any folder including General
       showRename: true,         // Can rename any folder including General
       showDelete: !isGeneralFolder, // Only restriction: can't delete General folder
@@ -446,6 +515,8 @@ const handleProfileContextMenu = (event: MouseEvent, folder: Folder, profile: Pr
     options: {
       showNewProfile: false,
       showNewFolder: false,
+      showExportProfile: true,
+      showExportFolder: false,
       showDuplicate: true,      // Can duplicate any profile including default
       showRename: true,         // Can rename any profile including default
       showDelete: !isDefaultProfile, // Only restriction: can't delete default profile
@@ -571,6 +642,16 @@ const handleDuplicate = () => {
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Failed to duplicate folder')
     }
+  }
+
+  closeContextMenu()
+}
+
+const handleExport = () => {
+  if (contextMenu.value.targetProfile) {
+    exportProfile(contextMenu.value.targetProfile)
+  } else if (contextMenu.value.targetFolder) {
+    exportFolder(contextMenu.value.targetFolder)
   }
 
   closeContextMenu()
