@@ -5,7 +5,7 @@
       <div class="relative flex items-center gap-2">
         <div class="relative flex-1">
           <MagnifyingGlassIcon class="size-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
+          <input v-model="searchQuery"
             class="w-full rounded-md border border-gray-300 py-2 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             type="search" name="q" placeholder="Search profiles..." aria-label="Search through profiles" />
         </div>
@@ -19,22 +19,26 @@
 
     <!-- sidebar content -->
     <div class="flex-1 overflow-y-auto p-2 relative bg-gray-50" @contextmenu.prevent="handleSidebarContextMenu">
-      <div v-for="folder in folderList" :key="folder.id" class="mb-1">
+      <div v-if="filteredFolderList.length === 0" class="p-3 text-sm text-gray-400 italic">
+        No matching folders or profiles
+      </div>
+
+      <div v-for="folder in filteredFolderList" :key="folder.id" class="mb-1">
         <!-- folder header -->
         <div class="flex items-center gap-2 p-2 rounded hover:bg-gray-200 cursor-pointer group"
           @click="toggleFolder(folder.id)" @contextmenu.stop.prevent="handleFolderContextMenu($event, folder)">
           <ChevronRightIcon :class="[
             'size-4 transition-transform',
-            expandedFolders.has(folder.id) ? 'rotate-90' : ''
+            isFolderExpanded(folder.id) ? 'rotate-90' : ''
           ]" />
           <FolderIcon class="size-5 text-yellow-500" />
           <span class="flex-1 text-sm font-medium text-gray-700">{{ folder.folderName }}</span>
-          <span class="text-xs text-gray-400">{{ folder.profiles.length }}</span>
+          <span class="text-xs text-gray-400">{{ getVisibleProfiles(folder).length }}</span>
         </div>
 
         <!-- folder content (profiles) -->
-        <div v-if="expandedFolders.has(folder.id)" class="ml-6 mt-1 space-y-0.5">
-          <div v-for="profile in folder.profiles" :key="profile.id"
+        <div v-if="isFolderExpanded(folder.id)" class="ml-6 mt-1 space-y-0.5">
+          <div v-for="profile in getVisibleProfiles(folder)" :key="profile.id"
             class="flex items-center gap-2 p-2 rounded hover:bg-gray-200 cursor-pointer group"
             :class="{ 'bg-blue-100': currentProfile?.id === profile.id }" @click="loadProfile(profile)"
             @contextmenu.stop.prevent="handleProfileContextMenu($event, folder, profile)">
@@ -43,7 +47,7 @@
           </div>
 
           <!-- empty state -->
-          <div v-if="folder.profiles.length === 0" class="p-2 text-sm text-gray-400 italic"
+          <div v-if="getVisibleProfiles(folder).length === 0" class="p-2 text-sm text-gray-400 italic"
             @contextmenu.stop.prevent="handleFolderContextMenu($event, folder)">
             Empty folder
           </div>
@@ -200,9 +204,49 @@ const folderStore = useFolderStore()
 
 const currentProfile = computed(() => profileStore.currentProfile)
 const folderList = computed(() => folderStore.folderList)
+const searchQuery = ref('')
+const normalizedSearch = computed(() => searchQuery.value.trim().toLowerCase())
+const isSearchActive = computed(() => normalizedSearch.value.length > 0)
+
+const filteredFolderList = computed(() => {
+  const query = normalizedSearch.value
+  if (!query) {
+    return folderList.value
+  }
+
+  return folderList.value.filter((folder) => {
+    const folderMatch = folder.folderName.toLowerCase().includes(query)
+    const profileMatch = folder.profiles.some((profile) =>
+      profile.profileName.toLowerCase().includes(query)
+    )
+    return folderMatch || profileMatch
+  })
+})
 
 // Track expanded folders
 const expandedFolders = ref<Set<string>>(new Set(['-1'])) // -1 is the General folder ID
+
+const isFolderExpanded = (folderId: string) => {
+  if (isSearchActive.value) {
+    return true
+  }
+  return expandedFolders.value.has(folderId)
+}
+
+const getVisibleProfiles = (folder: Folder) => {
+  const query = normalizedSearch.value
+  if (!query) {
+    return folder.profiles
+  }
+
+  if (folder.folderName.toLowerCase().includes(query)) {
+    return folder.profiles
+  }
+
+  return folder.profiles.filter((profile) =>
+    profile.profileName.toLowerCase().includes(query)
+  )
+}
 
 // Context menu state
 interface ContextMenuOptions {
