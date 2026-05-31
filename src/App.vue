@@ -9,7 +9,7 @@ import ConfigArea from "./components/ConfigArea.vue";
 <template>
 
   <div class="grid grid-cols-12 gap-2 items-stretch min-h-screen">
-    <div class="col-span-2 row-span-3 bg-gray-50 h-full">
+    <div class="col-span-2 row-span-3 bg-gray-50 min-h-screen h-full">
       <ProfileArea />
     </div>
     <div class="col-span-10">
