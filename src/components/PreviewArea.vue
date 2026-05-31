@@ -233,6 +233,9 @@ const generateGETRequest = () => {
   request += `Host: ${cfg.host}\r\n`
   request += `User-Agent: ${cfg.userAgent}\r\n`
   request += `Accept: */*\r\n`
+  if (cfg.cookie) {
+    request += `Cookie: ${cfg.cookie}\r\n`
+  }
   request += `Connection: ${cfg.connection}\r\n\r\n`
 
   return request
@@ -247,6 +250,9 @@ const generatePOSTRequest = () => {
   request += `Host: ${cfg.host}\r\n`
   request += `User-Agent: ${cfg.userAgent}\r\n`
   request += `Content-Type: ${cfg.contentType}\r\n`
+  if (cfg.cookie) {
+    request += `Cookie: ${cfg.cookie}\r\n`
+  }
 
   // Handle body with URL encoding if needed for form data
   let bodyContent = cfg.body || ''

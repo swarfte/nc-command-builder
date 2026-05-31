@@ -9,7 +9,7 @@
           <div class="flex gap-2">
             <button v-for="mode in payloadModes" :key="mode.value" @click="switchPayloadMode(mode.value)" :class="[
               'px-4 py-2 text-sm rounded-md transition-colors',
-              localConfig.payloadMode === mode.value
+              activePanel === mode.value
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             ]">
@@ -19,7 +19,7 @@
         </div>
 
         <!-- Raw Mode -->
-        <div v-if="localConfig.payloadMode === 'Raw'" class="space-y-4">
+        <div v-if="activePanel === 'Raw'" class="space-y-4">
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Raw Payload</label>
             <textarea v-model="localConfig.rawPayload"
@@ -30,7 +30,7 @@
         </div>
 
         <!-- GET Mode -->
-        <div v-if="localConfig.payloadMode === 'GET'" class="space-y-4">
+        <div v-if="activePanel === 'GET'" class="space-y-4">
           <div>
             <div class="grid grid-cols-12 gap-2 items-center mb-2">
               <label class="col-span-10 text-xs font-medium text-gray-600">Query Parameters</label>
@@ -58,7 +58,7 @@
         </div>
 
         <!-- POST Mode -->
-        <div v-if="localConfig.payloadMode === 'POST'" class="space-y-4">
+        <div v-if="activePanel === 'POST'" class="space-y-4">
           <!-- Content Type -->
           <div class="w-100">
             <label class="block text-xs font-medium text-gray-600 mb-1">Content Type</label>
@@ -98,6 +98,35 @@
             </div>
           </div>
         </div>
+
+        <!-- Cookie Mode -->
+        <div v-if="activePanel === 'Cookie'" class="space-y-4">
+          <div>
+            <div class="grid grid-cols-12 gap-2 items-center mb-2">
+              <label class="col-span-10 text-xs font-medium text-gray-600">Cookies</label>
+              <button @click="addCookieParameter" type="button"
+                class="col-span-2 inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 hover:text-blue-800">
+                <span class="text-base leading-none">+</span>
+                Add Cookie
+              </button>
+            </div>
+            <div class="space-y-2">
+              <div v-for="(cookie, index) in cookieParameters" :key="index"
+                class="grid grid-cols-12 gap-2 items-center">
+                <input v-model="cookie.key" @input="debouncedUpdate"
+                  class="col-span-5 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  type="text" placeholder="Name" />
+                <input v-model="cookie.value" @input="debouncedUpdate"
+                  class="col-span-5 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  type="text" placeholder="Value" />
+                <button @click="removeCookieParameter(index)" type="button"
+                  class="col-span-2 inline-flex h-9 items-center justify-center rounded-md border border-red-200 bg-red-50 px-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 hover:text-red-700">
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -120,6 +149,7 @@ const payloadModes = [
   { label: 'Raw', value: 'Raw' },
   { label: 'GET', value: 'GET' },
   { label: 'POST', value: 'POST' },
+  { label: 'Cookie', value: 'Cookie' },
 ]
 
 // Local config state
@@ -128,14 +158,21 @@ const localConfig = ref({
   query: '',
   body: '',
   rawPayload: '',
+  cookie: '',
   contentType: 'application/json',
 })
+
+const activePanel = ref<'Raw' | 'GET' | 'POST' | 'Cookie'>('GET')
+const panelMemoryByProfile = ref<Record<string, typeof activePanel.value>>({})
 
 // Query parameters for GET mode
 const queryParameters = ref<Array<{ key: string; value: string }>>([])
 
 // Body parameters for POST mode
 const bodyParameters = ref<Array<{ key: string; value: string }>>([])
+
+// Cookie parameters
+const cookieParameters = ref<Array<{ key: string; value: string }>>([])
 
 // Initialize 2 empty rows for parameters
 const initializeEmptyParameters = (count: number = 2) => {
@@ -159,8 +196,12 @@ const loadCurrentProfile = () => {
     query: profile.query || '',
     body: profile.body || '',
     rawPayload: profile.rawPayload || '',
+    cookie: profile.cookie || '',
     contentType: profile.contentType || 'application/json',
   }
+
+  activePanel.value = panelMemoryByProfile.value[profile.id]
+    ?? ((profile.payloadMode as typeof activePanel.value) || 'GET')
 
   // Parse query parameters from query string
   if (profile.query) {
@@ -197,6 +238,20 @@ const loadCurrentProfile = () => {
     bodyParameters.value = initializeEmptyParameters()
   }
 
+  // Parse cookie parameters from cookie string
+  if (profile.cookie) {
+    const parsed = profile.cookie.split(';')
+      .map(part => part.trim())
+      .filter(part => part.includes('='))
+      .map(part => {
+        const [key, ...valueParts] = part.split('=')
+        return { key: key.trim(), value: valueParts.join('=').trim() }
+      })
+    cookieParameters.value = parsed.length > 0 ? parsed : initializeEmptyParameters()
+  } else {
+    cookieParameters.value = initializeEmptyParameters()
+  }
+
   // Reset flag after a small delay
   setTimeout(() => {
     isUpdatingFromStore.value = false
@@ -213,6 +268,11 @@ const findFolderForProfile = (profileId: string) => {
 // Update profile in both stores
 const updateProfileInStores = () => {
   if (isUpdatingFromStore.value) return
+
+  localConfig.value.cookie = cookieParameters.value
+    .filter(p => p.key && p.value)
+    .map(p => `${p.key}=${p.value}`)
+    .join('; ')
 
   // Build query string from parameters for GET mode
   if (localConfig.value.payloadMode === 'GET') {
@@ -259,6 +319,7 @@ const updateProfileInStores = () => {
     query: localConfig.value.query,
     body: localConfig.value.body,
     rawPayload: localConfig.value.rawPayload,
+    cookie: localConfig.value.cookie,
     contentType: localConfig.value.contentType,
   })
 
@@ -271,6 +332,7 @@ const updateProfileInStores = () => {
       query: localConfig.value.query,
       body: localConfig.value.body,
       rawPayload: localConfig.value.rawPayload,
+      cookie: localConfig.value.cookie,
       contentType: localConfig.value.contentType,
     }
     folderStore.updateProfileInFolder(folder.id, updatedProfile)
@@ -292,6 +354,14 @@ const debouncedUpdate = () => {
 
 // Switch payload mode
 const switchPayloadMode = (mode: string) => {
+  if (mode === 'Cookie') {
+    activePanel.value = 'Cookie'
+    panelMemoryByProfile.value[currentProfileId.value] = 'Cookie'
+    return
+  }
+
+  activePanel.value = mode as typeof activePanel.value
+  panelMemoryByProfile.value[currentProfileId.value] = activePanel.value
   localConfig.value.payloadMode = mode
   updateProfileInStores()
 }
@@ -323,6 +393,22 @@ const addBodyParameter = () => {
 // Remove body parameter
 const removeBodyParameter = (index: number) => {
   bodyParameters.value.splice(index, 1)
+  nextTick(() => {
+    updateProfileInStores()
+  })
+}
+
+// Add cookie parameter
+const addCookieParameter = () => {
+  cookieParameters.value.push({ key: '', value: '' })
+  nextTick(() => {
+    updateProfileInStores()
+  })
+}
+
+// Remove cookie parameter
+const removeCookieParameter = (index: number) => {
+  cookieParameters.value.splice(index, 1)
   nextTick(() => {
     updateProfileInStores()
   })

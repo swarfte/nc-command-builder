@@ -11,6 +11,7 @@ export interface Profile {
   payloadMode: string;
   outputType: string;
   userAgent: string;
+  cookie: string;
   query?: string;
   body?: string;
   rawPayload?: string;
