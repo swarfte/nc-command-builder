@@ -43,7 +43,7 @@
             <div class="space-y-2">
               <div v-for="(param, index) in queryParameters" :key="index" class="grid grid-cols-12 gap-2 items-center">
                 <input v-model="param.enabled" @change="debouncedUpdate"
-                  class="col-span-1 h-9 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  class="col-span-1 h-9 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   type="checkbox" />
                 <input v-model="param.key" @input="debouncedUpdate"
                   class="col-span-3 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
