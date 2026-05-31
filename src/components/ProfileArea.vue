@@ -81,6 +81,20 @@
       <!-- <div v-if="contextMenu.options.showDuplicate || contextMenu.options.showRename || contextMenu.options.showDelete"
         class="border-t border-gray-200 my-1"></div> -->
 
+      <button v-if="contextMenu.options.showImportProfile"
+        class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+        @click="handleImportProfile">
+        <DocumentIcon class="size-4" />
+        <span>Import Profile</span>
+      </button>
+
+      <button v-if="contextMenu.options.showImportFolder"
+        class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+        @click="handleImportFolder">
+        <FolderIcon class="size-4" />
+        <span>Import Folder</span>
+      </button>
+
       <button v-if="contextMenu.options.showDuplicate"
         class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2" @click="handleDuplicate">
         <DocumentDuplicateIcon v-if="contextMenu.targetProfile" class="size-4" />
@@ -98,20 +112,6 @@
         class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2" @click="handleExport">
         <FolderIcon class="size-4" />
         <span>Export Folder</span>
-      </button>
-
-      <button v-if="contextMenu.options.showImportProfile"
-        class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
-        @click="handleImportProfile">
-        <DocumentIcon class="size-4" />
-        <span>Import Profile</span>
-      </button>
-
-      <button v-if="contextMenu.options.showImportFolder"
-        class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
-        @click="handleImportFolder">
-        <FolderIcon class="size-4" />
-        <span>Import Folder</span>
       </button>
 
       <button v-if="contextMenu.options.showRename"
