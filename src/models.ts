@@ -13,8 +13,11 @@ export interface Profile {
   userAgent: string;
   cookie: string;
   query?: string;
+  hiddenQuery?: string;
   body?: string;
+  hiddenBody?: string;
   rawPayload?: string;
+  hiddenCookie?: string;
   contentType: string;
   connection: string;
   isVerbose: boolean;

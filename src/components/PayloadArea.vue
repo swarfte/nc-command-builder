@@ -42,11 +42,14 @@
             </div>
             <div class="space-y-2">
               <div v-for="(param, index) in queryParameters" :key="index" class="grid grid-cols-12 gap-2 items-center">
+                <input v-model="param.enabled" @change="debouncedUpdate"
+                  class="col-span-1 h-9 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  type="checkbox" />
                 <input v-model="param.key" @input="debouncedUpdate"
                   class="col-span-5 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Key" />
                 <input v-model="param.value" @input="debouncedUpdate"
-                  class="col-span-5 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="col-span-4 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Value" />
                 <button @click="removeQueryParameter(index)" type="button"
                   class="col-span-2 inline-flex h-9 items-center justify-center rounded-md border border-red-200 bg-red-50 px-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 hover:text-red-700">
@@ -84,11 +87,14 @@
             </div>
             <div class="space-y-2">
               <div v-for="(param, index) in bodyParameters" :key="index" class="grid grid-cols-12 gap-2 items-center">
+                <input v-model="param.enabled" @change="debouncedUpdate"
+                  class="col-span-1 h-9 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  type="checkbox" />
                 <input v-model="param.key" @input="debouncedUpdate"
                   class="col-span-5 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Key" />
                 <input v-model="param.value" @input="debouncedUpdate"
-                  class="col-span-5 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="col-span-4 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Value" />
                 <button @click="removeBodyParameter(index)" type="button"
                   class="col-span-2 inline-flex h-9 items-center justify-center rounded-md border border-red-200 bg-red-50 px-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 hover:text-red-700">
@@ -113,11 +119,14 @@
             <div class="space-y-2">
               <div v-for="(cookie, index) in cookieParameters" :key="index"
                 class="grid grid-cols-12 gap-2 items-center">
+                <input v-model="cookie.enabled" @change="debouncedUpdate"
+                  class="col-span-1 h-9 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  type="checkbox" />
                 <input v-model="cookie.key" @input="debouncedUpdate"
                   class="col-span-5 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Name" />
                 <input v-model="cookie.value" @input="debouncedUpdate"
-                  class="col-span-5 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="col-span-4 h-9 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   type="text" placeholder="Value" />
                 <button @click="removeCookieParameter(index)" type="button"
                   class="col-span-2 inline-flex h-9 items-center justify-center rounded-md border border-red-200 bg-red-50 px-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 hover:text-red-700">
@@ -156,9 +165,12 @@ const payloadModes = [
 const localConfig = ref({
   payloadMode: 'GET',
   query: '',
+  hiddenQuery: '',
   body: '',
+  hiddenBody: '',
   rawPayload: '',
   cookie: '',
+  hiddenCookie: '',
   contentType: 'application/json',
 })
 
@@ -166,17 +178,46 @@ const activePanel = ref<'Raw' | 'GET' | 'POST' | 'Cookie'>('GET')
 const panelMemoryByProfile = ref<Record<string, typeof activePanel.value>>({})
 
 // Query parameters for GET mode
-const queryParameters = ref<Array<{ key: string; value: string }>>([])
+const queryParameters = ref<Array<{ key: string; value: string; enabled: boolean }>>([])
 
 // Body parameters for POST mode
-const bodyParameters = ref<Array<{ key: string; value: string }>>([])
+const bodyParameters = ref<Array<{ key: string; value: string; enabled: boolean }>>([])
 
 // Cookie parameters
-const cookieParameters = ref<Array<{ key: string; value: string }>>([])
+const cookieParameters = ref<Array<{ key: string; value: string; enabled: boolean }>>([])
 
 // Initialize 2 empty rows for parameters
 const initializeEmptyParameters = (count: number = 2) => {
-  return Array.from({ length: count }, () => ({ key: '', value: '' }))
+  return Array.from({ length: count }, () => ({ key: '', value: '', enabled: true }))
+}
+
+const parseFormLikeString = (input: string) => {
+  return input.split('&')
+    .filter(param => param.includes('='))
+    .map(param => {
+      const [key, value] = param.split('=')
+      return { key: decodeURIComponent(key), value: decodeURIComponent(value) }
+    })
+}
+
+const parseTextPairs = (input: string) => {
+  return input.split('\n')
+    .map(line => line.trim())
+    .filter(line => line.includes(':'))
+    .map(line => {
+      const [key, ...valueParts] = line.split(':')
+      return { key: key.trim(), value: valueParts.join(':').trim() }
+    })
+}
+
+const parseCookieString = (input: string) => {
+  return input.split(';')
+    .map(part => part.trim())
+    .filter(part => part.includes('='))
+    .map(part => {
+      const [key, ...valueParts] = part.split('=')
+      return { key: key.trim(), value: valueParts.join('=').trim() }
+    })
 }
 
 // Load current profile into local config
@@ -194,9 +235,12 @@ const loadCurrentProfile = () => {
   localConfig.value = {
     payloadMode: profile.payloadMode || 'GET',
     query: profile.query || '',
+    hiddenQuery: profile.hiddenQuery || '',
     body: profile.body || '',
+    hiddenBody: profile.hiddenBody || '',
     rawPayload: profile.rawPayload || '',
     cookie: profile.cookie || '',
+    hiddenCookie: profile.hiddenCookie || '',
     contentType: profile.contentType || 'application/json',
   }
 
@@ -204,51 +248,62 @@ const loadCurrentProfile = () => {
     ?? ((profile.payloadMode as typeof activePanel.value) || 'GET')
 
   // Parse query parameters from query string
-  if (profile.query) {
-    const parsed = profile.query.split('&')
-      .filter(param => param.includes('='))
-      .map(param => {
-        const [key, value] = param.split('=')
-        return { key: decodeURIComponent(key), value: decodeURIComponent(value) }
-      })
-    queryParameters.value = parsed.length > 0 ? parsed : initializeEmptyParameters()
-  } else {
+  const enabledQuery = profile.query ? parseFormLikeString(profile.query) : []
+  const hiddenQuery = profile.hiddenQuery ? parseFormLikeString(profile.hiddenQuery) : []
+  queryParameters.value = [
+    ...enabledQuery.map(param => ({ ...param, enabled: true })),
+    ...hiddenQuery.map(param => ({ ...param, enabled: false })),
+  ]
+  if (queryParameters.value.length === 0) {
     queryParameters.value = initializeEmptyParameters()
   }
 
   // Parse body parameters from body string
-  if (profile.body && profile.contentType === 'application/json') {
+  const contentType = profile.contentType || 'application/json'
+  let enabledBody: Array<{ key: string; value: string }> = []
+  let hiddenBody: Array<{ key: string; value: string }> = []
+
+  if (contentType === 'application/json') {
     try {
-      const obj = JSON.parse(profile.body)
-      const parsed = Object.entries(obj)
-        .map(([key, value]) => ({ key, value: String(value) }))
-      bodyParameters.value = parsed.length > 0 ? parsed : initializeEmptyParameters()
+      if (profile.body) {
+        const obj = JSON.parse(profile.body)
+        enabledBody = Object.entries(obj).map(([key, value]) => ({ key, value: String(value) }))
+      }
     } catch {
-      bodyParameters.value = initializeEmptyParameters()
+      enabledBody = []
     }
-  } else if (profile.body && profile.contentType === 'application/x-www-form-urlencoded') {
-    const parsed = profile.body.split('&')
-      .filter(param => param.includes('='))
-      .map(param => {
-        const [key, value] = param.split('=')
-        return { key: decodeURIComponent(key), value: decodeURIComponent(value) }
-      })
-    bodyParameters.value = parsed.length > 0 ? parsed : initializeEmptyParameters()
+    try {
+      if (profile.hiddenBody) {
+        const obj = JSON.parse(profile.hiddenBody)
+        hiddenBody = Object.entries(obj).map(([key, value]) => ({ key, value: String(value) }))
+      }
+    } catch {
+      hiddenBody = []
+    }
+  } else if (contentType === 'application/x-www-form-urlencoded') {
+    enabledBody = profile.body ? parseFormLikeString(profile.body) : []
+    hiddenBody = profile.hiddenBody ? parseFormLikeString(profile.hiddenBody) : []
   } else {
+    enabledBody = profile.body ? parseTextPairs(profile.body) : []
+    hiddenBody = profile.hiddenBody ? parseTextPairs(profile.hiddenBody) : []
+  }
+
+  bodyParameters.value = [
+    ...enabledBody.map(param => ({ ...param, enabled: true })),
+    ...hiddenBody.map(param => ({ ...param, enabled: false })),
+  ]
+  if (bodyParameters.value.length === 0) {
     bodyParameters.value = initializeEmptyParameters()
   }
 
   // Parse cookie parameters from cookie string
-  if (profile.cookie) {
-    const parsed = profile.cookie.split(';')
-      .map(part => part.trim())
-      .filter(part => part.includes('='))
-      .map(part => {
-        const [key, ...valueParts] = part.split('=')
-        return { key: key.trim(), value: valueParts.join('=').trim() }
-      })
-    cookieParameters.value = parsed.length > 0 ? parsed : initializeEmptyParameters()
-  } else {
+  const enabledCookies = profile.cookie ? parseCookieString(profile.cookie) : []
+  const hiddenCookies = profile.hiddenCookie ? parseCookieString(profile.hiddenCookie) : []
+  cookieParameters.value = [
+    ...enabledCookies.map(param => ({ ...param, enabled: true })),
+    ...hiddenCookies.map(param => ({ ...param, enabled: false })),
+  ]
+  if (cookieParameters.value.length === 0) {
     cookieParameters.value = initializeEmptyParameters()
   }
 
@@ -269,42 +324,70 @@ const findFolderForProfile = (profileId: string) => {
 const updateProfileInStores = () => {
   if (isUpdatingFromStore.value) return
 
-  localConfig.value.cookie = cookieParameters.value
+  const enabledCookies = cookieParameters.value.filter(p => p.enabled)
+  const hiddenCookies = cookieParameters.value.filter(p => !p.enabled)
+
+  localConfig.value.cookie = enabledCookies
+    .filter(p => p.key && p.value)
+    .map(p => `${p.key}=${p.value}`)
+    .join('; ')
+  localConfig.value.hiddenCookie = hiddenCookies
     .filter(p => p.key && p.value)
     .map(p => `${p.key}=${p.value}`)
     .join('; ')
 
   // Build query string from parameters for GET mode
+  const enabledQuery = queryParameters.value.filter(p => p.enabled)
+  const hiddenQuery = queryParameters.value.filter(p => !p.enabled)
+  const enabledQueryString = enabledQuery
+    .filter(p => p.key && p.value)
+    .map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`)
+    .join('&')
+  const hiddenQueryString = hiddenQuery
+    .filter(p => p.key && p.value)
+    .map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`)
+    .join('&')
+
   if (localConfig.value.payloadMode === 'GET') {
-    localConfig.value.query = queryParameters.value
-      .filter(p => p.key && p.value)
-      .map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`)
-      .join('&')
+    localConfig.value.query = enabledQueryString
     localConfig.value.body = ''
     localConfig.value.rawPayload = ''
+  } else {
+    localConfig.value.query = ''
   }
+  localConfig.value.hiddenQuery = hiddenQueryString
 
   // Build body string from parameters for POST mode
-  if (localConfig.value.payloadMode === 'POST') {
+  const enabledBody = bodyParameters.value.filter(p => p.enabled)
+  const hiddenBody = bodyParameters.value.filter(p => !p.enabled)
+
+  const buildBodyString = (params: Array<{ key: string; value: string }>) => {
+    const filtered = params.filter(p => p.key && p.value)
+    if (filtered.length === 0) return ''
+
     if (localConfig.value.contentType === 'application/json') {
-      const obj = bodyParameters.value
-        .filter(p => p.key && p.value)
-        .reduce((acc, p) => ({ ...acc, [p.key]: p.value }), {})
-      localConfig.value.body = JSON.stringify(obj)
-    } else if (localConfig.value.contentType === 'application/x-www-form-urlencoded') {
-      localConfig.value.body = bodyParameters.value
-        .filter(p => p.key && p.value)
+      const obj = filtered.reduce((acc, p) => ({ ...acc, [p.key]: p.value }), {})
+      return JSON.stringify(obj)
+    }
+    if (localConfig.value.contentType === 'application/x-www-form-urlencoded') {
+      return filtered
         .map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`)
         .join('&')
-    } else {
-      localConfig.value.body = bodyParameters.value
-        .filter(p => p.key && p.value)
-        .map(p => `${p.key}: ${p.value}`)
-        .join('\n')
     }
+    return filtered.map(p => `${p.key}: ${p.value}`).join('\n')
+  }
+
+  const enabledBodyString = buildBodyString(enabledBody)
+  const hiddenBodyString = buildBodyString(hiddenBody)
+
+  if (localConfig.value.payloadMode === 'POST') {
+    localConfig.value.body = enabledBodyString
     localConfig.value.query = ''
     localConfig.value.rawPayload = ''
+  } else {
+    localConfig.value.body = ''
   }
+  localConfig.value.hiddenBody = hiddenBodyString
 
   // For Raw mode, use rawPayload directly
   if (localConfig.value.payloadMode === 'Raw') {
@@ -317,9 +400,12 @@ const updateProfileInStores = () => {
   profileStore.updateProfile({
     payloadMode: localConfig.value.payloadMode,
     query: localConfig.value.query,
+    hiddenQuery: localConfig.value.hiddenQuery,
     body: localConfig.value.body,
+    hiddenBody: localConfig.value.hiddenBody,
     rawPayload: localConfig.value.rawPayload,
     cookie: localConfig.value.cookie,
+    hiddenCookie: localConfig.value.hiddenCookie,
     contentType: localConfig.value.contentType,
   })
 
@@ -330,9 +416,12 @@ const updateProfileInStores = () => {
       ...profileStore.currentProfile,
       payloadMode: localConfig.value.payloadMode,
       query: localConfig.value.query,
+      hiddenQuery: localConfig.value.hiddenQuery,
       body: localConfig.value.body,
+      hiddenBody: localConfig.value.hiddenBody,
       rawPayload: localConfig.value.rawPayload,
       cookie: localConfig.value.cookie,
+      hiddenCookie: localConfig.value.hiddenCookie,
       contentType: localConfig.value.contentType,
     }
     folderStore.updateProfileInFolder(folder.id, updatedProfile)
@@ -368,7 +457,7 @@ const switchPayloadMode = (mode: string) => {
 
 // Add query parameter
 const addQueryParameter = () => {
-  queryParameters.value.push({ key: '', value: '' })
+  queryParameters.value.push({ key: '', value: '', enabled: true })
   nextTick(() => {
     updateProfileInStores()
   })
@@ -384,7 +473,7 @@ const removeQueryParameter = (index: number) => {
 
 // Add body parameter
 const addBodyParameter = () => {
-  bodyParameters.value.push({ key: '', value: '' })
+  bodyParameters.value.push({ key: '', value: '', enabled: true })
   nextTick(() => {
     updateProfileInStores()
   })
@@ -400,7 +489,7 @@ const removeBodyParameter = (index: number) => {
 
 // Add cookie parameter
 const addCookieParameter = () => {
-  cookieParameters.value.push({ key: '', value: '' })
+  cookieParameters.value.push({ key: '', value: '', enabled: true })
   nextTick(() => {
     updateProfileInStores()
   })
