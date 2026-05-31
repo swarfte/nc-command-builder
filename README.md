@@ -4,38 +4,62 @@ A modern web-based GUI tool for visually constructing `netcat` commands. Built f
 
 ![Screenshot](screenshot/main_screen.png)
 
+## Tutorial / How to Use
+
+Try the live demo: https://nc-command-builder.vercel.app/
+
+1. Pick or create a profile in the left sidebar. (Right click profile sidebar to create profile / folder, or right click the folder to create profile)
+2. Configure target and connection settings in the Configuration panel.
+3. Choose a payload mode (Raw, GET, POST, Cookie) and fill in parameters.
+4. Review the generated command in the preview panel and click Copy.
+5. Organize profiles into folders, search, drag-drop between folders, and use Export/Import from the right-click menu.
+
+All data is saved to localStorage automatically.
+
 ## Features
 
 ### Visual Command Builder
+
 - **Real-time preview** — See your command update instantly as you change any parameter
 - **Multiple netcat flavors** — Support for GNU netcat, OpenBSD netcat, FreeBSD netcat, Ncat (Nmap), and socat
 - **Connection modes** — Configure connect or listen modes with proper flag handling
 - **Protocol support** — TCP and UDP with correct flags for each flavor
 - **Advanced options** — Verbose output, DNS resolution, timeout, close delay, bind addresses
 
-### Payload Editor with Three Modes
+### Payload Editor with Four Modes
+
 - **Raw TCP** — Direct text input for custom payloads with complete control
 - **HTTP GET** — Form-based builder for query parameters with automatic URL encoding
-- **HTTP POST** — Key-value body builder with multiple content-type support:
-  - `application/json`
-  - `application/x-www-form-urlencoded`
-  - `text/plain`
-  - `text/html`
-  - `application/xml`
+- **HTTP POST** — Key-value body builder with multiple content-type support
+- **Cookie** — Structured cookie builder for HTTP requests
+
+Supported content types:
+
+- `application/json`
+- `application/x-www-form-urlencoded`
+- `text/plain`
+- `text/html`
+- `application/xml`
 
 ### Smart Command Generation
+
 - **Flavor-specific syntax** — Generates correct flags and syntax for each netcat variant
 - **Automatic header construction** — Builds proper HTTP requests with Host, User-Agent, Content-Type, Content-Length, and Connection headers
 - **URL encoding handling** — Proper encoding for query parameters and form data
 - **Payload escaping** — Correct escape sequence handling for special characters
 
 ### Profile Management
+
 - **Folder organization** — Postman-style folder system for organizing profiles
 - **Save & load configurations** — Store complete configurations with a single click
 - **Persistent storage** — Uses localStorage to persist your profiles across sessions
 - **Quick switching** — Instantly switch between saved configurations
+- **Search** — Filter folders and profiles by name
+- **Drag and drop** — Move profiles between folders
+- **Import/Export** — Share profiles or full folders as JSON files
 
 ### Modern Web Interface
+
 - **Responsive design** — Works on desktop and tablet screens
 - **Fast & lightweight** — No backend required, runs entirely in your browser
 - **Copy to clipboard** — One-click copying of generated commands
@@ -91,49 +115,62 @@ The built files will be in the `dist/` directory, ready for deployment to any st
 
 Configure the target and connection settings in the top panel:
 
-| Field | Options | Default |
-|-------|---------|---------|
-| Host | Any hostname or IP address | `localhost` |
-| Port | Any valid port number | `8080` |
-| Path | URL path for HTTP requests | `/` |
-| Mode | Connect, Listen | `Connect` |
-| Protocol | TCP, UDP | `TCP` |
+| Field         | Options                                                 | Default      |
+| ------------- | ------------------------------------------------------- | ------------ |
+| Host          | Any hostname or IP address                              | `localhost`  |
+| Port          | Any valid port number                                   | `8080`       |
+| Path          | URL path for HTTP requests                              | `/`          |
+| Mode          | Connect, Listen                                         | `Connect`    |
+| Protocol      | TCP, UDP                                                | `TCP`        |
 | Netcat Flavor | GNU netcat, OpenBSD netcat, FreeBSD netcat, Ncat, socat | `GNU netcat` |
 
 ### Advanced Options
 
 Configure additional netcat flags:
 
-| Option | Flag | Description |
-|--------|------|-------------|
-| Verbose | `-v` | Enable verbose output |
-| No DNS | `-n` | Skip DNS resolution (faster for IP addresses) |
-| Keep Listening | `-k` | Keep accepting connections after first closes (listen mode only) |
-| Timeout | `-w N` | Connection/read timeout in seconds |
-| Close Delay | `-q N` | Wait after EOF before closing |
-| Bind Address | `-s IP` | Bind to specific local address |
+| Option         | Flag    | Description                                                      |
+| -------------- | ------- | ---------------------------------------------------------------- |
+| Verbose        | `-v`    | Enable verbose output                                            |
+| No DNS         | `-n`    | Skip DNS resolution (faster for IP addresses)                    |
+| Keep Listening | `-k`    | Keep accepting connections after first closes (listen mode only) |
+| Timeout        | `-w N`  | Connection/read timeout in seconds                               |
+| Close Delay    | `-q N`  | Wait after EOF before closing                                    |
+| Bind Address   | `-s IP` | Bind to specific local address                                   |
 
 ### Payload Modes
 
 #### Raw Mode
+
 For complete control over your payload:
+
 - Enter any custom payload text
 - Supports escape sequences like `\r\n`, `\x41`, etc.
 - Direct passthrough to netcat
 
 #### GET Mode
+
 Build HTTP GET requests with query parameters:
+
 - Add multiple key-value parameter pairs
 - Automatic URL encoding
 - Generates proper HTTP GET request with headers
 - Supports dynamic path and query string construction
 
 #### POST Mode
+
 Create HTTP POST requests with body content:
+
 - Choose content type (JSON, form-encoded, text, etc.)
 - Add multiple body parameters
 - Automatic Content-Length calculation
 - Generates properly formatted POST requests
+
+#### Cookie Mode
+
+Build a Cookie header with key-value pairs:
+
+- Add multiple cookies with enable/disable toggles
+- Generates a valid `Cookie` header for GET/POST requests
 
 ### Profile Management
 
@@ -142,34 +179,41 @@ The left sidebar provides Postman-style profile management:
 1. **Create Folders** — Organize your profiles into custom folders
 2. **Save Profiles** — Save your current configuration with a custom name
 3. **Load Profiles** — Click any profile to instantly load its configuration
-4. **Delete Profiles** — Remove profiles you no longer need
-5. **Folder Operations** — Rename or delete folders as needed
+4. **Search** — Use the search bar to filter folders and profiles
+5. **Drag and Drop** — Move profiles between folders
+6. **Import/Export** — Right-click to export or import profiles and folders
+7. **Folder Operations** — Rename or delete folders as needed
 
 All profiles are automatically persisted to localStorage and survive browser restarts.
 
 ### Example Commands
 
 #### Simple TCP Connection
+
 ```
 nc -v -n -w 5 localhost 8080
 ```
 
 #### HTTP GET Request
+
 ```
 printf "GET / HTTP/1.1\r\nHost: localhost\r\nUser-Agent: netcat-command-builder\r\nAccept: */*\r\nConnection: close\r\n\r\n" | nc -v -n -w 5 localhost 8080
 ```
 
 #### HTTP POST with JSON
+
 ```
 printf "POST /api HTTP/1.1\r\nHost: localhost\r\nUser-Agent: netcat-command-builder\r\nContent-Type: application/json\r\nContent-Length: 27\r\nConnection: close\r\n\r\n{\"key\":\"value\",\"foo\":\"bar\"}" | nc -v -n -w 5 localhost 8080
 ```
 
 #### Listen Mode with Keep-Alive
+
 ```
 nc -l -k -v localhost 8080
 ```
 
 #### UDP Connection
+
 ```
 nc -u -v -n localhost 8080
 ```
@@ -202,6 +246,7 @@ nc-command-builder/
 ## Architecture
 
 ### State Management
+
 The application uses **Pinia** for state management with two synchronized stores:
 
 - **useFolderStore** — Manages folder organization and profile storage
@@ -210,6 +255,7 @@ The application uses **Pinia** for state management with two synchronized stores
 Both stores persist to localStorage automatically, ensuring your work is never lost.
 
 ### Component Architecture
+
 The application follows a clean component-based architecture:
 
 - **ProfileArea** — Handles profile CRUD operations and folder management
@@ -218,6 +264,7 @@ The application follows a clean component-based architecture:
 - **PreviewArea** — Generates flavor-specific netcat commands with proper syntax
 
 ### Data Flow
+
 ```
 User Input → Component State → Pinia Store → Command Generation → Live Preview
 ```
