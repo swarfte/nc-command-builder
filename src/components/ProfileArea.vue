@@ -190,7 +190,6 @@ import {
   DocumentDuplicateIcon,
   PencilIcon,
   TrashIcon,
-  ClipboardDocumentIcon,
   ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 import { useProfileStore, useFolderStore } from '../stores'
