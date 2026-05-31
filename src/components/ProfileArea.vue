@@ -26,7 +26,10 @@
       <div v-for="folder in filteredFolderList" :key="folder.id" class="mb-1">
         <!-- folder header -->
         <div class="flex items-center gap-2 p-2 rounded hover:bg-gray-200 cursor-pointer group"
-          @click="toggleFolder(folder.id)" @contextmenu.stop.prevent="handleFolderContextMenu($event, folder)">
+          :class="{ 'bg-blue-50': dragOverFolderId === folder.id }" @click="toggleFolder(folder.id)"
+          @contextmenu.stop.prevent="handleFolderContextMenu($event, folder)"
+          @dragover.prevent="handleFolderDragOver($event, folder.id)" @dragleave="handleFolderDragLeave"
+          @drop.prevent="handleFolderDrop($event, folder)">
           <ChevronRightIcon :class="[
             'size-4 transition-transform',
             isFolderExpanded(folder.id) ? 'rotate-90' : ''
@@ -38,10 +41,11 @@
 
         <!-- folder content (profiles) -->
         <div v-if="isFolderExpanded(folder.id)" class="ml-6 mt-1 space-y-0.5">
-          <div v-for="profile in getVisibleProfiles(folder)" :key="profile.id"
+          <div v-for="profile in getVisibleProfiles(folder)" :key="profile.id" draggable="true"
             class="flex items-center gap-2 p-2 rounded hover:bg-gray-200 cursor-pointer group"
             :class="{ 'bg-blue-100': currentProfile?.id === profile.id }" @click="loadProfile(profile)"
-            @contextmenu.stop.prevent="handleProfileContextMenu($event, folder, profile)">
+            @contextmenu.stop.prevent="handleProfileContextMenu($event, folder, profile)"
+            @dragstart="handleProfileDragStart($event, folder, profile)" @dragend="handleProfileDragEnd">
             <DocumentIcon class="size-4 text-gray-500" />
             <span class="flex-1 text-sm text-gray-700 truncate">{{ profile.profileName }}</span>
           </div>
@@ -296,6 +300,7 @@ const renameFolderInput = ref<HTMLInputElement | null>(null)
 
 // Reset confirmation dialog state
 const showResetConfirmDialog = ref(false)
+const dragOverFolderId = ref<string | null>(null)
 
 // Toggle folder expansion
 const toggleFolder = (folderId: string) => {
@@ -310,6 +315,77 @@ const toggleFolder = (folderId: string) => {
 // Load profile into current profile
 const loadProfile = (profile: Profile) => {
   profileStore.loadProfile(profile)
+}
+
+const handleProfileDragStart = (event: DragEvent, folder: Folder, profile: Profile) => {
+  if (!event.dataTransfer) {
+    return
+  }
+
+  if (folder.id === '-1' && profile.id === 'default-profile') {
+    event.preventDefault()
+    return
+  }
+
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('application/json', JSON.stringify({
+    profileId: profile.id,
+    fromFolderId: folder.id,
+  }))
+}
+
+const handleProfileDragEnd = () => {
+  dragOverFolderId.value = null
+}
+
+const handleFolderDragOver = (event: DragEvent, folderId: string) => {
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+  dragOverFolderId.value = folderId
+}
+
+const handleFolderDragLeave = () => {
+  dragOverFolderId.value = null
+}
+
+const handleFolderDrop = (event: DragEvent, targetFolder: Folder) => {
+  dragOverFolderId.value = null
+  if (!event.dataTransfer) {
+    return
+  }
+
+  const payload = event.dataTransfer.getData('application/json')
+  if (!payload) {
+    return
+  }
+
+  let dragData: { profileId: string; fromFolderId: string } | null = null
+  try {
+    dragData = JSON.parse(payload)
+  } catch {
+    return
+  }
+
+  if (!dragData || dragData.fromFolderId === targetFolder.id) {
+    return
+  }
+
+  const sourceFolder = folderStore.getFolderById(dragData.fromFolderId)
+  const profileToMove = sourceFolder?.profiles.find((p) => p.id === dragData?.profileId)
+  if (!sourceFolder || !profileToMove) {
+    return
+  }
+
+  if (sourceFolder.id === '-1' && profileToMove.id === 'default-profile') {
+    return
+  }
+
+  folderStore.deleteProfileFromFolder(sourceFolder.id, profileToMove.id)
+  folderStore.addProfileToFolder(targetFolder.id, profileToMove)
+
+  expandedFolders.value.add(targetFolder.id)
+  expandedFolders.value = new Set(expandedFolders.value)
 }
 
 // Close context menu
