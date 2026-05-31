@@ -163,6 +163,7 @@ const localConfig = ref({
 })
 
 const activePanel = ref<'Raw' | 'GET' | 'POST' | 'Cookie'>('GET')
+const panelMemoryByProfile = ref<Record<string, typeof activePanel.value>>({})
 
 // Query parameters for GET mode
 const queryParameters = ref<Array<{ key: string; value: string }>>([])
@@ -199,7 +200,8 @@ const loadCurrentProfile = () => {
     contentType: profile.contentType || 'application/json',
   }
 
-  activePanel.value = (profile.payloadMode as typeof activePanel.value) || 'GET'
+  activePanel.value = panelMemoryByProfile.value[profile.id]
+    ?? ((profile.payloadMode as typeof activePanel.value) || 'GET')
 
   // Parse query parameters from query string
   if (profile.query) {
@@ -354,10 +356,12 @@ const debouncedUpdate = () => {
 const switchPayloadMode = (mode: string) => {
   if (mode === 'Cookie') {
     activePanel.value = 'Cookie'
+    panelMemoryByProfile.value[currentProfileId.value] = 'Cookie'
     return
   }
 
   activePanel.value = mode as typeof activePanel.value
+  panelMemoryByProfile.value[currentProfileId.value] = activePanel.value
   localConfig.value.payloadMode = mode
   updateProfileInStores()
 }
