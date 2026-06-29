@@ -9,9 +9,9 @@
             class="w-full rounded-md border border-gray-300 py-2 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             type="search" name="q" placeholder="Search profiles..." aria-label="Search through profiles" />
         </div>
-        <button class="px-3 py-2 text-sm bg-red-500 text-white hover:bg-red-600 rounded-md flex items-center gap-2"
-          @click="showResetConfirmDialog = true">
-          <ArrowPathIcon class="size-5" />
+        <button class="px-3 py-2 text-sm bg-blue-500 text-white hover:bg-blue-600 rounded-md flex items-center gap-2"
+          @click="exportAll" title="Export all folders">
+          <ArrowDownTrayIcon class="size-5" />
         </button>
       </div>
     </div>
@@ -93,6 +93,13 @@
         @click="handleImportFolder">
         <FolderIcon class="size-4" />
         <span>Import Folder</span>
+      </button>
+
+      <button v-if="contextMenu.options.showImportAll"
+        class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+        @click="handleImportAll">
+        <ArrowUpTrayIcon class="size-4" />
+        <span>Import All</span>
       </button>
 
       <button v-if="contextMenu.options.showDuplicate"
@@ -190,26 +197,6 @@
       </div>
     </div>
 
-    <!-- reset confirmation dialog -->
-    <div v-if="showResetConfirmDialog"
-      class="fixed inset-0 z-[10000] flex items-center justify-center bg-black bg-opacity-50">
-      <div class="bg-white rounded-lg shadow-xl p-6 w-96">
-        <h3 class="text-lg font-semibold mb-4">Reset All Data</h3>
-        <p class="text-sm text-gray-600 mb-6">
-          Are you sure you want to reset all data? This will delete all folders and profiles except the General folder
-          and default profile. This action cannot be undone.
-        </p>
-        <div class="flex justify-end gap-2">
-          <button class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md" @click="cancelReset">
-            Cancel
-          </button>
-          <button class="px-4 py-2 text-sm bg-red-500 text-white hover:bg-red-600 rounded-md" @click="confirmReset">
-            Reset All
-          </button>
-        </div>
-      </div>
-    </div>
-
     <input ref="importFileInput" class="hidden" type="file" accept="application/json"
       @change="handleImportFileChange" />
   </div>
@@ -227,7 +214,8 @@ import {
   DocumentDuplicateIcon,
   PencilIcon,
   TrashIcon,
-  ArrowPathIcon
+  ArrowDownTrayIcon,
+  ArrowUpTrayIcon
 } from '@heroicons/vue/24/outline'
 import { useProfileStore, useFolderStore } from '../stores'
 import type { Profile, Folder } from '../models'
@@ -289,6 +277,7 @@ interface ContextMenuOptions {
   showExportFolder: boolean
   showImportProfile: boolean
   showImportFolder: boolean
+  showImportAll: boolean
   showDuplicate: boolean
   showRename: boolean
   showDelete: boolean
@@ -314,6 +303,7 @@ const contextMenu = ref<ContextMenuState>({
     showExportFolder: false,
     showImportProfile: false,
     showImportFolder: false,
+    showImportAll: false,
     showDuplicate: false,
     showRename: false,
     showDelete: false,
@@ -335,11 +325,9 @@ const renameFolderName = ref('')
 const renameProfileInput = ref<HTMLInputElement | null>(null)
 const renameFolderInput = ref<HTMLInputElement | null>(null)
 
-// Reset confirmation dialog state
-const showResetConfirmDialog = ref(false)
 const dragOverFolderId = ref<string | null>(null)
 const importFileInput = ref<HTMLInputElement | null>(null)
-const importAction = ref<{ mode: 'profile' | 'folder'; targetFolderId?: string } | null>(null)
+const importAction = ref<{ mode: 'profile' | 'folder' | 'all'; targetFolderId?: string } | null>(null)
 
 // Toggle folder expansion
 const toggleFolder = (folderId: string) => {
@@ -476,6 +464,21 @@ const exportFolder = (folder: Folder) => {
   downloadExport(payload, fileName)
 }
 
+const exportAll = () => {
+  const payload = {
+    type: 'nc-all-export',
+    version: '1.0',
+    exportedAt: new Date().toISOString(),
+    folders: folderList.value.map((folder) => ({
+      id: folder.id,
+      folderName: folder.folderName,
+      profiles: folder.profiles.map((profile) => ({ ...profile })),
+    })),
+  }
+  const date = new Date().toISOString().slice(0, 10)
+  downloadExport(payload, `nc-all-export-${date}.json`)
+}
+
 const makeUniqueFolderName = (baseName: string) => {
   let candidate = baseName.trim() || 'Imported Folder'
   let counter = 1
@@ -486,7 +489,7 @@ const makeUniqueFolderName = (baseName: string) => {
   return candidate
 }
 
-const openImportDialog = (mode: 'profile' | 'folder', targetFolderId?: string) => {
+const openImportDialog = (mode: 'profile' | 'folder' | 'all', targetFolderId?: string) => {
   importAction.value = { mode, targetFolderId }
   if (importFileInput.value) {
     importFileInput.value.value = ''
@@ -542,6 +545,16 @@ const handleImportFileChange = async (event: Event) => {
         return
       }
       importFolder(payload.folder as Folder)
+      return
+    }
+
+    if (action.mode === 'all') {
+      if (payload?.type !== 'nc-all-export' || !Array.isArray(payload?.folders)) {
+        alert('Invalid export-all file.')
+        return
+      }
+      const folders = payload.folders as Folder[]
+      folders.forEach((folder) => importFolder(folder))
     }
   } catch (error) {
     alert(error instanceof Error ? error.message : 'Failed to import file')
@@ -558,7 +571,6 @@ const closeContextMenu = () => {
 
 // Handle sidebar context menu (empty area)
 const handleSidebarContextMenu = (event: MouseEvent) => {
-  console.log('Sidebar context menu triggered')
   const generalFolder = folderStore.getFolderById('-1') // Get General folder by ID
 
   contextMenu.value = {
@@ -572,14 +584,13 @@ const handleSidebarContextMenu = (event: MouseEvent) => {
       showExportFolder: false,
       showImportProfile: true,
       showImportFolder: true,
+      showImportAll: true,
       showDuplicate: false,
       showRename: false,
       showDelete: false,
     },
     targetFolder: generalFolder || undefined,
   }
-
-  console.log('Context menu state:', contextMenu.value)
 }
 
 // Handle folder context menu
@@ -597,6 +608,7 @@ const handleFolderContextMenu = (event: MouseEvent, folder: Folder) => {
       showExportFolder: true,
       showImportProfile: true,
       showImportFolder: false,
+      showImportAll: false,
       showDuplicate: true,      // Can duplicate any folder including General
       showRename: true,         // Can rename any folder including General
       showDelete: !isGeneralFolder, // Only restriction: can't delete General folder
@@ -621,6 +633,7 @@ const handleProfileContextMenu = (event: MouseEvent, folder: Folder, profile: Pr
       showExportFolder: false,
       showImportProfile: false,
       showImportFolder: false,
+      showImportAll: false,
       showDuplicate: true,      // Can duplicate any profile including default
       showRename: true,         // Can rename any profile including default
       showDelete: !isDefaultProfile, // Only restriction: can't delete default profile
@@ -772,6 +785,11 @@ const handleImportFolder = () => {
   closeContextMenu()
 }
 
+const handleImportAll = () => {
+  openImportDialog('all')
+  closeContextMenu()
+}
+
 // Handle rename
 const handleRename = () => {
   closeContextMenu()
@@ -880,65 +898,6 @@ const handleDelete = () => {
   }
 
   closeContextMenu()
-}
-
-// Handle reset
-const confirmReset = () => {
-  // Reset folder store to initial state
-  folderStore.folderDict = {
-    '-1': {
-      id: '-1',
-      folderName: 'General',
-      profiles: [
-        {
-          id: 'default-profile',
-          version: '1.0',
-          profileName: 'default',
-          host: 'localhost',
-          port: 8080,
-          path: '',
-          userAgent: 'nc-command-builder',
-          targetMode: 'connect',
-          protocol: 'TCP',
-          flavor: 'GNU netcat',
-          payloadMode: 'GET',
-          outputType: 'printf',
-          query: '',
-          hiddenQuery: '',
-          body: '',
-          hiddenBody: '',
-          cookie: '',
-          hiddenCookie: '',
-          contentType: 'text/plain',
-          connection: 'close',
-          isVerbose: true,
-          isNoDNS: false,
-          isKeepListening: true,
-          timeout: 5,
-          closeDelay: 0,
-          bindCommand: '',
-        },
-      ],
-    },
-  }
-
-  // Reset current profile to default
-  const generalFolder = folderStore.getFolderById('-1')
-  if (generalFolder && generalFolder.profiles.length > 0) {
-    const defaultProfile = generalFolder.profiles.find(p => p.id === 'default-profile')
-    if (defaultProfile) {
-      profileStore.loadProfile(defaultProfile)
-    }
-  }
-
-  // Reset expanded folders to only show General
-  expandedFolders.value = new Set(['-1'])
-
-  showResetConfirmDialog.value = false
-}
-
-const cancelReset = () => {
-  showResetConfirmDialog.value = false
 }
 
 // Initialize default profile on component mount
